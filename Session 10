@@ -1,0 +1,90 @@
+Logistic Regression & Sigmoid Function  
+
+Task 1: Sigmoid Function
+
+Code:
+import numpy as np
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+print("Sigmoid(-2):", sigmoid(-2))
+print("Sigmoid(0):", sigmoid(0))
+print("Sigmoid(3):", sigmoid(3))
+
+Output:
+- Sigmoid(-2) → 0.1192  
+- Sigmoid(0) → 0.5  
+- Sigmoid(3) → 0.9526  
+
+Explain: 
+The sigmoid function maps any input to a probability between 0 and 1.  
+- Values close to 1 → high probability.  
+- Values close to 0 → low probability.  
+
+Task 2: Logistic Regression (Instagram Posts)
+
+Code:
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+data = {
+    "likes": [100, 250, 500, 1000, 1500, 2000, 3000, 4000, 5000, 6000],
+    "has_caption": [0, 1, 1, 0, 1, 1, 0, 1, 1, 1],
+    "viral": [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+}
+df = pd.DataFrame(data)
+X = df[["likes", "has_caption"]]
+y = df["viral"]
+model = LogisticRegression()
+model.fit(X, y)
+print("Model Coefficients:")
+for feature, coef in zip(X.columns, model.coef_[0]):
+    print(feature, ":", coef)
+print("Intercept:", model.intercept_[0])
+
+Explanation:
+- Likes coefficient: Effect of likes on viral probability.  
+- Has_caption coefficient: Effect of captions on viral probability.  
+- Intercept: Baseline probability when features = 0.  
+
+Task 3: Plot Sigmoid Function
+
+Code:
+import numpy as np
+import matplotlib.pyplot as plt
+x = np.linspace(-10, 10, 200)
+y = 1 / (1 + np.exp(-x))
+plt.plot(x, y, label="Sigmoid Function")
+plt.axhline(y=0.5, linestyle="--", label="Threshold = 0.5")
+plt.xlabel("x")
+plt.ylabel("Sigmoid(x)")
+plt.title("Sigmoid Function")
+plt.legend()
+plt.grid()
+plt.show()
+
+Explanation:
+- The curve shows probability mapping.  
+- Threshold = 0.5 → common cutoff for classification.  
+  - ≥ 0.5 → class 1 (Viral).  
+  - < 0.5 → class 0 (Not Viral).  
+
+Task 4: Classification Function
+
+Code:
+def classify_post(probability, threshold=0.5):
+    return "Viral" if probability >= threshold else "Not Viral"
+print("Threshold = 0.5")
+print("0.2:", classify_post(0.2))
+print("0.6:", classify_post(0.6))
+print("0.8:", classify_post(0.8))
+print("\nThreshold = 0.7")
+print("0.2:", classify_post(0.2, 0.7))
+print("0.6:", classify_post(0.6, 0.7))
+print("0.8:", classify_post(0.8, 0.7))
+
+Output:
+- Threshold = 0.5 → 0.2 = Not Viral, 0.6 = Viral, 0.8 = Viral  
+- Threshold = 0.7 → 0.2 = Not Viral, 0.6 = Not Viral, 0.8 = Viral  
+
+Explanation: 
+- Threshold defines strictness.  
+- Higher threshold → fewer posts classified as Viral.  
