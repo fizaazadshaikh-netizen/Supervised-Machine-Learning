@@ -1,0 +1,71 @@
+IPL Data Preprocessing Using Pandas and Scikit‑Learn  
+
+Task 1: Identify Missing Values
+
+Code
+import pandas as pd
+df = pd.read_csv("ipl_data.csv")
+print(df.head())
+print("Missing values in each column:")
+print(df.isnull().sum())
+
+Answer:
+
+This step helps identify incomplete data.  
+By checking missing values, we can decide how to handle them before modeling.
+
+Task 2: Fill Missing Player Ages with Median
+
+Code:
+median_age = df["player_age"].median()
+df["player_age"] = df["player_age"].fillna(median_age)
+print(df["player_age"])
+
+Answer:
+Replacing missing ages with the median ensures the dataset remains balanced and avoids skewing results caused by extreme values.
+
+Task 3: Replace Missing Team Names
+
+Code:
+df["team"] = df["team"].fillna("Unknown")
+print(df.head(10))
+
+Answe:
+Assigning "Unknown" to missing team names maintains consistency and prevents errors during analysis or model training.
+
+Task 4: One‑Hot Encode the Venue Column
+
+Code:
+venue_encoded = pd.get_dummies(df["venue"], prefix="venue")
+print(venue_encoded)
+
+Answer:
+One‑hot encoding converts categorical data (like venues) into numerical form.  
+Each venue becomes a separate binary column, making it suitable for machine learning models.
+
+Task 5: Encode Player Roles Using LabelEncoder
+
+Code:
+from sklearn.preprocessing import LabelEncoder
+encoder = LabelEncoder()
+df["player_role_encoded"] = encoder.fit_transform(df["player_role"])
+print(df[["player_role", "player_role_encoded"]].drop_duplicates())
+print("\nMapping:")
+for role, value in zip(encoder.classes_, encoder.transform(encoder.classes_)):
+    print(role, "=", value)
+
+Answer:
+LabelEncoder assigns a unique numeric value to each player role.  
+Example mapping:
+
+| Player Role | Encoded Value |
+|--------------|--------------|
+| Allrounder   | 0            |
+| Batsman      | 1            |
+| Bowler       | 2            |
+
+The encoding is alphabetical, so the numeric values depend on the dataset’s unique role names.
+
+
+✨ This version is **clean, professional, and visually structured** — ideal for your GitHub repository or academic submission.  
+Would you like me to **add a visual flow diagram** showing the five preprocessing steps (Missing Values → Imputation → Encoding → Model‑Ready Data)? It would make your assignment presentation‑ready.
