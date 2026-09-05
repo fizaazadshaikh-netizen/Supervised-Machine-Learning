@@ -1,0 +1,90 @@
+Linear Regression – Instagram Usage vs Phone Battery  
+
+Task 1: Scatter Plot of Data
+
+Code:
+import numpy as np
+import matplotlib.pyplot as plt
+instagram_hours = np.array([1, 2, 3, 4, 5, 6, 7])
+battery_percentage = np.array([90, 82, 75, 65, 58, 48, 40])
+plt.scatter(instagram_hours, battery_percentage)
+plt.xlabel("Instagram Usage (Hours)")
+plt.ylabel("Battery Percentage (%)")
+plt.title("Instagram Usage vs Phone Battery")
+plt.show()
+
+Answer:
+Scatter plot shows the relationship between Instagram usage (hours) and phone battery percentage at day’s end.
+
+Task 2: Fit Linear Regression Model
+
+Code:
+from sklearn.linear_model import LinearRegression
+X = instagram_hours.reshape(-1, 1)
+y = battery_percentage
+model = LinearRegression()
+model.fit(X, y)
+print("Slope (Coefficient):", model.coef_[0])
+print("Intercept:", model.intercept_)
+
+Answer:
+- Slope (Coefficient): Change in battery % for each extra hour on Instagram.  
+- Intercept: Predicted battery % when Instagram usage = 0 hours.  
+
+Task 3: Plot Regression Line
+
+Code:
+y_pred = model.predict(X)
+plt.scatter(instagram_hours, battery_percentage, label="Actual Data")
+plt.plot(instagram_hours, y_pred, label="Regression Line")
+plt.xlabel("Instagram Usage (Hours)")
+plt.ylabel("Battery Percentage (%)")
+plt.title("Instagram Usage vs Phone Battery")
+plt.legend()
+plt.show()
+
+Explain:
+Scatter points = actual data.  
+Regression line = predicted battery % from the model.  
+
+Task 4: Calculate Mean Squared Error (MSE)
+
+Code:
+from sklearn.metrics import mean_squared_error
+mse = mean_squared_error(y, y_pred)
+print("Mean Squared Error (MSE):", mse)
+
+Explain:  
+- MSE -- measures prediction error.  
+- Lower MSE → predictions are closer to actual values.  
+
+Complete Code (All Tasks Together)
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+instagram_hours = np.array([1, 2, 3, 4, 5, 6, 7])
+battery_percentage = np.array([90, 82, 75, 65, 58, 48, 40])
+plt.scatter(instagram_hours, battery_percentage)
+plt.xlabel("Instagram Usage (Hours)")
+plt.ylabel("Battery Percentage (%)")
+plt.title("Instagram Usage vs Phone Battery")
+plt.show()
+X = instagram_hours.reshape(-1, 1)
+y = battery_percentage
+model = LinearRegression()
+model.fit(X, y)
+print("Slope (Coefficient):", model.coef_[0])
+print("Intercept:", model.intercept_)
+y_pred = model.predict(X)
+plt.scatter(instagram_hours, battery_percentage, label="Actual Data")
+plt.plot(instagram_hours, y_pred, label="Regression Line")
+plt.xlabel("Instagram Usage (Hours)")
+plt.ylabel("Battery Percentage (%)")
+plt.title("Instagram Usage vs Phone Battery")
+plt.legend()
+plt.show()
+mse = mean_squared_error(y, y_pred)
+print("Mean Squared Error (MSE):", mse)
+print("Lower MSE indicates predictions are close to actual values.")
