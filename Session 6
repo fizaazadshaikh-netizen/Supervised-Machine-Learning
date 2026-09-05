@@ -1,0 +1,100 @@
+Multiple Linear Regression – Mobile Phone Price Prediction  
+
+Task 1: Fit Regression Model
+
+Code:
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+df = pd.read_csv("mobile_prices.csv")
+X = df[["ram", "storage", "camera_mp", "battery"]]
+y = df["price"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model = LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("Mean Squared Error:", mse)
+print("R2 Score:", r2)
+
+Answer:
+The model predicts mobile phone price using RAM, storage, camera MP, and battery capacity.  
+MSE measures error, R² shows how well features explain price variation.
+
+Task 2: Coefficients & Intercept
+
+Code:
+print("Intercept:", model.intercept_)
+print("\nRegression Coefficients:")
+for feature, coefficient in zip(X.columns, model.coef_):
+    print(feature, ":", coefficient)
+
+Explain:
+- Intercept: Predicted price when all features = 0.  
+- RAM coefficient: Price change per extra GB RAM.  
+- Storage coefficient: Price change per extra unit storage.  
+- Camera MP coefficient: Price change per extra megapixel.  
+- Battery coefficient: Price change per extra unit battery capacity.  
+
+Example: If RAM coefficient = 2500 → +₹2,500 per additional GB RAM.
+
+Task 3: Variance Inflation Factor (VIF)
+
+Code:
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+vif_data = pd.DataFrame()
+vif_data["Feature"] = X.columns
+vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+print("VIF Values:")
+print(vif_data)
+
+Answer:
+- VIF < 5: Low multicollinearity.  
+- VIF 5–10: Moderate concern.  
+- VIF > 10: Serious multicollinearity.  
+
+Example: RAM & storage may show high VIF since premium phones often have both.
+
+Task 4: Feature Importance
+
+Code:
+importance = pd.DataFrame({
+    "Feature": X.columns,
+    "Coefficient": model.coef_
+})
+importance["Absolute_Coefficient"] = importance["Coefficient"].abs()
+importance = importance.sort_values(by="Absolute_Coefficient", ascending=False)
+print(importance)
+
+Answer: 
+The feature with the largest absolute coefficient is most influential.  
+(For fair comparison, coefficients should be standardized since features use different units.)
+
+Task 5: Remove Collinear Feature & Re‑fit Model
+
+Code:
+X_new = df[["ram", "camera_mp", "battery"]]
+y = df["price"]
+
+X_train_new, X_test_new, y_train_new, y_test_new = train_test_split(X_new, y, test_size=0.2, random_state=42)
+model_new = LinearRegression()
+model_new.fit(X_train_new, y_train_new)
+y_pred_new = model_new.predict(X_test_new)
+mse_new = mean_squared_error(y_test_new, y_pred_new)
+r2_new = r2_score(y_test_new, y_pred_new)
+print("New Intercept:", model_new.intercept_)
+print("\nNew Coefficients:")
+for feature, coefficient in zip(X_new.columns, model_new.coef_):
+    print(feature, ":", coefficient)
+print("\nOld Model MSE:", mse)
+print("New Model MSE:", mse_new)
+print("\nOld Model R2 Score:", r2)
+print("New Model R2 Score:", r2_new)
+
+Comparison:
+- Old Model: Features = RAM, Storage, Camera MP, Battery  
+- New Model: Features = RAM, Camera MP, Battery  
+- Removing collinear features stabilizes coefficients, reduces redundancy, and improves interpretability.  
