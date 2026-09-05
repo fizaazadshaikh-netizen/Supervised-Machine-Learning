@@ -1,0 +1,100 @@
+Random Forest Classification  
+
+
+Task 1: Train Random Forest on Iris Dataset
+
+Code:
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+iris = load_iris()
+X, y = iris.data, iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+print("Random Forest Test Accuracy:", accuracy_score(y_test, y_pred))
+
+Explanation:
+Random Forest combines multiple decision trees and aggregates their predictions. On Iris, it usually achieves high accuracy.
+
+
+Task 2: Flipkart Dataset – Feature Importance
+
+Code:
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+data = {
+    "price":[500,700,1000,1200,1500,2000,2500,3000,3500,4000,
+             4500,5000,5500,6000,6500,7000,7500,8000,8500,9000],
+    "rating":[3.5,4.0,3.8,4.2,4.5,3.9,4.1,4.3,4.6,4.0,
+              4.2,4.5,3.7,4.4,4.6,4.1,4.3,4.7,4.5,4.8],
+    "brand":["A","A","B","B","C","C","A","B","C","A",
+             "B","C","A","B","C","A","B","C","A","B"],
+    "category":["Mobile","Mobile","Mobile","Mobile","Mobile",
+                "Laptop","Laptop","Laptop","Laptop","Laptop",
+                "Laptop","Laptop","TV","TV","TV","TV","TV","TV","TV","TV"]
+}
+df = pd.DataFrame(data)
+df["brand_encoded"] = LabelEncoder().fit_transform(df["brand"])
+X, y = df[["price","rating","brand_encoded"]], df["category"]
+model = RandomForestClassifier(n_estimators=100, random_state=42).fit(X,y)
+importance = pd.DataFrame({"Feature":X.columns,"Importance":model.feature_importances_}).sort_values(by="Importance",ascending=False)
+print("Feature Importance:\n", importance)
+
+Explanation:
+Feature importance shows which attributes (price, rating, brand) most influence category prediction.
+
+
+Task 3: Hyperparameter Tuning
+
+Code:
+n_estimators_values = [10, 50, 100]
+max_depth_values = [2, 4, 6]
+best_accuracy, best_params = 0, None
+for n in n_estimators_values:
+    for depth in max_depth_values:
+        model = RandomForestClassifier(n_estimators=n, max_depth=depth, random_state=42)
+        model.fit(X_train, y_train)
+        acc = accuracy_score(y_test, model.predict(X_test))
+        print("n_estimators =", n, "max_depth =", depth, "Accuracy =", acc)
+        if acc > best_accuracy:
+            best_accuracy, best_params = acc, (n, depth)
+print("\nBest Accuracy:", best_accuracy)
+print("Best Parameters:", best_params)
+
+Explanation:
+- n_estimators: Number of trees.  
+- max_depth: Tree depth.  
+Best combination = highest test accuracy.
+
+Task 4: Compare Decision Tree vs Random Forest
+
+Code:
+from sklearn.tree import DecisionTreeClassifier
+tree_model = DecisionTreeClassifier(random_state=42).fit(X_train,y_train)
+forest_model = RandomForestClassifier(n_estimators=100, random_state=42).fit(X_train,y_train)
+print("Decision Tree Accuracy:", accuracy_score(y_test, tree_model.predict(X_test)))
+print("Random Forest Accuracy:", accuracy_score(y_test, forest_model.predict(X_test)))
+
+Explanation:
+- Decision Tree: Prone to overfitting.  
+- Random Forest: Combines many trees → reduces variance, more stable predictions.
+
+
+Task 5: Spotify Hit Prediction
+
+Code:
+df = pd.read_csv("spotify_songs.csv").dropna(subset=["tempo","danceability","energy","popularity","hit"])
+X, y = df[["tempo","danceability","energy","popularity"]], df["hit"]
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+model = RandomForestClassifier(n_estimators=100, random_state=42).fit(X_train,y_train)
+y_pred = model.predict(X_test)
+print("Spotify Hit Prediction Accuracy:", accuracy_score(y_test,y_pred))
+importance = pd.DataFrame({"Feature":X.columns,"Importance":model.feature_importances_}).sort_values(by="Importance",ascending=False)
+print("\nFeature Importance:\n", importance)
+
+Explanation:
+Random Forest predicts hit vs non‑hit songs using features like tempo, danceability, energy, popularity. Feature importance highlights the strongest predictors.
