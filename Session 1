@@ -1,0 +1,47 @@
+
+
+1. Three Daily Apps and Their ML Features
+
+| App           | ML Feature                                                                  | Type of Learning          |
+| ------------- | --------------------------------------------------------------------------- | ------------------------- |
+| **Instagram** | Suggests posts/reels based on your interests and past activity.             | Supervised Learning       |
+| **Zomato**    | Suggests restaurants or dishes based on your previous orders and ratings.   | Supervised Learning       |
+| **Flipkart**  | Groups and recommends products similar those you searched/purchased.        | Unsupervised Learning     |
+
+
+Note: Real-world recommendation systems often combine supervised, unsupervised, and reinforcement learning. These are simplified examples for clarity.
+
+2. Classify the Scenarios
+
+Netflix recommending movies based on watch history → Supervised Learning  
+Learns from labeled data (ratings, watch history) to predict preferences.
+
+Spotify grouping similar songs into playlists → Unsupervised Learning  
+Clusters songs by audio features without predefined labels.
+
+Self-driving car learning to park by trial and error → Reinforcement Learning  
+Learns through actions and feedback (rewards/penalties).
+
+3. Basic ML Workflow (Swiggy Example)
+
+Data → Preprocessing → Modeling → Evaluation → Deployment
+
+Data: Collect order history, restaurant details, ratings, delivery times.
+
+Preprocessing: Handle missing values, normalize delivery time data.
+
+Modeling: Train ML model to predict delivery time or recommend restaurants.
+
+Evaluation: Measure accuracy using test datasets.
+
+Deployment: Integrate the model into the Swiggy app for real users.
+
+https://copilot.microsoft.com/shares/iJMtaB9HHqxNMr6cs51he
+
+4. Traditional Programming vs Machine Learning
+
+Traditional Programming: Relies on fixed rules (e.g., “if message contains ‘lottery’ → mark as spam”). Effective but rigid, requiring constant manual updates.
+
+Machine Learning: Learns from datasets of spam vs non-spam messages. Extracts patterns (word frequency, sender behavior, message length) and adapts to new spam types automatically.
+
+Key Difference: Traditional programming = rules-based. Machine learning = data-driven learning.
