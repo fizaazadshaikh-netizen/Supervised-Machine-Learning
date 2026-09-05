@@ -1,0 +1,143 @@
+KNN & Naive Bayes Classification  
+
+
+Task 1: KNN on Flipkart Reviews
+
+Code:
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+
+reviews = [
+    "Amazing product and excellent quality",
+    "Very good product",
+    "I love this product",
+    "Excellent and worth the money",
+    "Very bad product",
+    "Worst product ever",
+    "Poor quality and disappointing",
+    "Not good at all",
+    "Amazing quality",
+    "Terrible product"
+]
+
+labels = ["positive","positive","positive","positive",
+          "negative","negative","negative","negative",
+          "positive","negative"]
+
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(reviews)
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X, labels)
+new_review = ["Excellent product and good quality"]
+prediction = knn.predict(vectorizer.transform(new_review))
+print("Review:", new_review[0])
+print("Prediction:", prediction[0])
+
+Explanation:
+- CountVectorizer: Converts text into word‑count features.  
+- KNN: Predicts sentiment by majority vote of nearest neighbors.  
+
+Task 2: KNN Distance Comparison (Spotify Features)
+
+Code:
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+data = {
+    "tempo":[140,150,130,145,155,70,80,75,85,90],
+    "danceability":[0.85,0.90,0.80,0.88,0.92,0.30,0.40,0.35,0.45,0.50],
+    "energy":[0.90,0.95,0.85,0.92,0.98,0.25,0.30,0.20,0.35,0.40],
+    "playlist":["workout","workout","workout","workout","workout",
+                "chill","chill","chill","chill","chill"]
+}
+df = pd.DataFrame(data)
+X = df[["tempo","danceability","energy"]]
+y = df["playlist"]
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3,random_state=42,stratify=y)
+scaler = StandardScaler()
+X_train,X_test = scaler.fit_transform(X_train),scaler.transform(X_test)
+knn_euclidean = KNeighborsClassifier(n_neighbors=3,metric="euclidean").fit(X_train,y_train)
+knn_manhattan = KNeighborsClassifier(n_neighbors=3,metric="manhattan").fit(X_train,y_train)
+print("Euclidean Accuracy:", accuracy_score(y_test,knn_euclidean.predict(X_test)))
+print("Manhattan Accuracy:", accuracy_score(y_test,knn_manhattan.predict(X_test)))
+
+Explanation:
+- Euclidean: Straight‑line distance.  
+- Manhattan: Sum of absolute differences.  
+- Accuracy comparison shows which metric fits better.  
+
+Task 3: Gaussian Naive Bayes (IRCTC Bookings)
+
+Code:
+import pandas as pd
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+data = {
+    "booking_time":[1,2,3,4,5,6,7,8,9,10],
+    "train_popularity":[2,3,4,5,6,7,8,9,9,10],
+    "travel_day":[1,1,2,2,3,3,4,4,5,5],
+    "status":["confirmed","confirmed","confirmed","confirmed","confirmed",
+              "waitlisted","waitlisted","waitlisted","waitlisted","waitlisted"]
+}
+df = pd.DataFrame(data)
+X,y = df[["booking_time","train_popularity","travel_day"]],df["status"]
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3,random_state=42)
+model = GaussianNB().fit(X_train,y_train)
+print("Predictions:", model.predict(X_test))
+print("Accuracy:", accuracy_score(y_test,model.predict(X_test)))
+print("New Booking Prediction:", model.predict([[3,4,2]])[0])
+
+Explanation:
+Gaussian Naive Bayes assumes features follow a normal distribution and predicts booking status based on probabilities.  
+
+Task 4: Multinomial Naive Bayes (WhatsApp Messages)
+
+Code:
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, accuracy_score
+messages = ["Hi mom how are you","Happy birthday brother","Can you call me tonight",
+            "I will reach home soon","How was your day","Friends meeting at 7 pm",
+            "Everyone come to the group meeting","Team meeting tomorrow at 10",
+            "Please share your assignment in group","Our cricket match is tomorrow",
+            "Congratulations you won a free prize","Click this link to claim your reward",
+            "You have won a lottery prize","Congratulations claim your free gift","Click now to win money"]
+
+labels = ["personal","personal","personal","personal","personal",
+          "group","group","group","group","group",
+          "spam","spam","spam","spam","spam"]
+vectorizer = CountVectorizer()
+X,y = vectorizer.fit_transform(messages),labels
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3,random_state=42,stratify=y)
+model = MultinomialNB().fit(X_train,y_train)
+predictions = model.predict(X_test)
+print("Accuracy:", accuracy_score(y_test,predictions))
+print("Confusion Matrix:\n", confusion_matrix(y_test,predictions,labels=["personal","group","spam"]))
+
+Explanation:
+- Confusion Matrix: Diagonal = correct predictions, off‑diagonal = misclassifications.  
+- Useful for evaluating multi‑class classification.  
+
+Task 5: KNN Image Classifier (Cricket Bat vs Football)
+
+Code:
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+np.random.seed(42)
+X = np.random.randint(0,256,size=(20,8,8))
+y = np.array(["bat"]*10 + ["football"]*10)
+X = X.reshape(20,-1)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3,random_state=42,stratify=y)
+knn = KNeighborsClassifier(n_neighbors=3).fit(X_train,y_train)
+predictions = knn.predict(X_test)
+print("Predictions:", predictions)
+print("Actual:", y_test)
+print("Accuracy:", accuracy_score(y_test,predictions))
+print("New Image Prediction:", knn.predict(np.random.randint(0,256,size=(1,64)))[0])
