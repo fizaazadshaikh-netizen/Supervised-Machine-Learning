@@ -1,0 +1,101 @@
+Data Preprocessing Across Multiple Domains  
+(IPL, Flipkart, Spotify, Zomato, BookMyShow)
+
+Task 1: IPL Player Stats – StandardScaler
+
+Code:
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+df = pd.read_csv("ipl_stats.csv")
+features = ["runs", "wickets", "matches", "strike_rate"]
+X = df[features]
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+scaled_df = pd.DataFrame(X_scaled, columns=features)
+scaled_df.to_csv("ipl_scaled.csv", index=False)
+print("Scaled data:")
+print(scaled_df.head())
+
+Answe:
+StandardScaler transforms numeric features to have mean = 0 and standard deviation = 1.  
+This ensures fair contribution of all stats in ML models.  
+
+Task 2: Flipkart Product Ratings – MinMaxScaler
+
+Code:
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+df = pd.read_csv("flipkart_products.csv")
+features = ["price", "rating", "number_of_reviews", "discount"]
+X = df[features]
+print("Before Scaling:\n", X.min(), "\n", X.max())
+scaler = MinMaxScaler()
+X_scaled = scaler.fit_transform(X)
+scaled_df = pd.DataFrame(X_scaled, columns=features)
+print("After Scaling:\n", scaled_df.min(), "\n", scaled_df.max())
+
+Answe:
+MinMaxScaler rescales values into the range [0,1].  
+After scaling → min = 0, max = 1 for each feature.  
+
+Task 3: Spotify Songs – Correlation Analysis
+
+Code:
+import pandas as pd
+df = pd.read_csv("spotify_songs.csv")
+correlation = df[["danceability", "energy", "tempo", "popularity"]].corr()
+print("Correlation with popularity:\n", correlation["popularity"])
+top_features = correlation["popularity"].drop("popularity").abs().sort_values(ascending=False).head(2)
+print("\nTop 2 features:\n", top_features)
+
+Answer:
+The two features with the strongest correlation to popularity are selected.  
+Example outcome:  
+1. Danceability 
+2. Energy  
+
+Exact features depend on dataset values.
+
+Task 4: Zomato Restaurants – RFE Feature Selection
+
+Code:
+import pandas as pd
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.feature_selection import RFE
+df = pd.read_csv("zomato.csv")
+features = ["votes", "rating", "price_range", "table_booking", "online_order"]
+X = df[features]
+y = df["average_cost_for_two"]
+model = DecisionTreeRegressor(random_state=42)
+rfe = RFE(estimator=model, n_features_to_select=3)
+rfe.fit(X, y)
+selected_features = X.columns[rfe.support_]
+print("Selected Features:\n", selected_features)
+print("\nRFE Ranking:")
+for feature, rank in zip(X.columns, rfe.ranking_):
+    print(feature, "=", rank)
+
+
+Answer:
+RFE eliminates less important features iteratively.  
+Example selected features: rating, votes, price_range.  
+Exact output depends on dataset.
+
+Task 5: BookMyShow Movie Ratings – Outlier Detection (IQR)
+
+Code:
+import pandas as pd
+df = pd.read_csv("bookmyshow_movies.csv")
+Q1 = df["user ratings"].quantile(0.25)
+Q3 = df["user ratings"].quantile(0.75)
+IQR = Q3 - Q1
+lower_limit = Q1 - 1.5 * IQR
+upper_limit = Q3 + 1.5 * IQR
+df_clean = df[(df["user ratings"] >= lower_limit) & (df["user ratings"] <= upper_limit)]
+rows_dropped = len(df) - len(df_clean)
+print("Rows dropped:", rows_dropped)
+print("Rows remaining:", len(df_clean))
+
+Answer:
+IQR method removes extreme values outside \([Q1 - 1.5×IQR, Q3 + 1.5×IQR]\).  
+This ensures cleaner, more reliable data for modeling.  
