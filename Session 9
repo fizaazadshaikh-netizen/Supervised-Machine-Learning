@@ -1,0 +1,108 @@
+Lasso, Ridge & Elastic Net Regression  
+
+
+Task 1: Dataset Preparation (Spotify Songs)
+
+Code:
+import pandas as pd
+from sklearn.model_selection import train_test_split
+df = pd.read_csv("spotify_songs.csv")
+features = [
+    "danceability","energy","loudness","speechiness",
+    "acousticness","instrumentalness","liveness","valence","tempo"
+]
+X = df[features]
+y = df["popularity"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print("Features:\n", X.head())
+print("\nTarget:\n", y.head())
+print("\nTraining rows:", len(X_train))
+print("Testing rows:", len(X_test))
+
+Explain:
+We predict song popularity using audio features. Splitting into train/test ensures generalization.
+
+Task 2: Lasso Regression (Feature Selection)
+
+Code:
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Lasso
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+lasso = Lasso(alpha=0.1)
+lasso.fit(X_train_scaled, y_train)
+print("LASSO COEFFICIENTS:")
+for feature, coef in zip(features, lasso.coef_):
+    print(feature, ":", coef)
+
+Explain:
+- Lasso (L1 regularization): Shrinks coefficients, some become exactly zero → automatic feature selection.  
+
+Task 3: Ridge Regression (Coefficient Shrinkage)
+
+Code:
+from sklearn.linear_model import Ridge
+ridge = Ridge(alpha=0.1)
+ridge.fit(X_train_scaled, y_train)
+print("RIDGE COEFFICIENTS:")
+for feature, coef in zip(features, ridge.coef_):
+    print(feature, ":", coef)
+comparison = pd.DataFrame({
+    "Feature": features,
+    "Lasso": lasso.coef_,
+    "Ridge": ridge.coef_
+})
+print("\nLASSO vs RIDGE:\n", comparison)
+
+Explain:
+- Ridge (L2 regularization): Shrinks coefficients but rarely sets them to zero.  
+- Comparison: Lasso removes features, Ridge keeps all but reduces their impact.  
+
+Task 4: Elastic Net Regression (Balanced Regularization)
+
+Code:
+from sklearn.linear_model import ElasticNet
+elastic = ElasticNet(alpha=0.1, l1_ratio=0.5)
+elastic.fit(X_train_scaled, y_train)
+print("ELASTIC NET COEFFICIENTS:")
+for feature, coef in zip(features, elastic.coef_):
+    print(feature, ":", coef)
+comparison = pd.DataFrame({
+    "Feature": features,
+    "Lasso": lasso.coef_,
+    "Ridge": ridge.coef_,
+    "ElasticNet": elastic.coef_
+})
+print("\nLASSO vs RIDGE vs ELASTIC NET:\n", comparison)
+
+Explain:
+- Elastic Net: Combines L1 (Lasso) + L2 (Ridge).  
+- l1_ratio:  
+  - 1.0 → behaves like Lasso.  
+  - 0.0 → behaves like Ridge.  
+  - 0.5 → balanced mix.  
+
+Task 5: Lasso Feature Selection (Zomato Ratings)
+
+Code:
+df = pd.read_csv("zomato.csv")
+features = ["votes","average_cost_for_two","price_range","online_order","table_booking"]
+df = df.dropna(subset=features + ["rating"])
+X = df[features]
+y = df["rating"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+lasso = Lasso(alpha=0.1)
+lasso.fit(X_train_scaled, y_train)
+feature_selection = pd.DataFrame({"Feature": features,"Coefficient": lasso.coef_})
+kept = feature_selection[feature_selection["Coefficient"] != 0]["Feature"]
+dropped = feature_selection[feature_selection["Coefficient"] == 0]["Feature"]
+print("Feature Coefficients:\n", feature_selection)
+print("\nKEPT FEATURES:", list(kept))
+print("DROPPED FEATURES:", list(dropped))
+
+Explain:
+- Kept Features: Non‑zero coefficients → contribute to prediction.  
+- Dropped Features: Zero coefficients → removed by Lasso.  
