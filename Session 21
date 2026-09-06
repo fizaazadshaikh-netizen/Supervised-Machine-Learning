@@ -1,0 +1,504 @@
+TIME SERIES FEATURE ENGINEERING AND TEMPERATURE FORECASTING
+
+
+TASK 1
+
+Load a CSV file containing daily temperature data for Ahmedabad and create two new features:
+
+1. 3-day lag of temperature
+2. 7-day rolling average of temperature
+
+Suppose the CSV file is named:
+
+ahmedabad_temperature.csv
+
+The CSV should contain:
+
+date
+temperature
+
+
+CODE:
+
+import pandas as pd
+
+# Load Ahmedabad temperature dataset
+df = pd.read_csv("ahmedabad_temperature.csv")
+
+# Convert date column to datetime
+df["date"] = pd.to_datetime(df["date"])
+
+# Sort by date
+df = df.sort_values("date")
+
+# Create 3-day lag
+df["temp_lag_3"] = df["temperature"].shift(3)
+
+# Create 7-day rolling average
+df["temp_rolling_7"] = (
+    df["temperature"]
+    .rolling(window=7)
+    .mean()
+)
+
+# Display the data
+print(df.head(10))
+
+
+EXPLANATION:
+
+The 3-day lag contains the temperature from three days earlier. The 7-day rolling average calculates the average temperature over the previous seven days and helps smooth short-term fluctuations.
+
+
+TASK 2
+
+Extract date-time features from a Flipkart-style sales dataset. Create columns for day of week, month, and whether the day is a weekend.
+
+Suppose the CSV file is named:
+
+flipkart_sales.csv
+
+CODE:
+
+import pandas as pd
+
+# Load sales dataset
+sales = pd.read_csv("flipkart_sales.csv")
+
+# Convert order_date to datetime
+sales["order_date"] = pd.to_datetime(
+    sales["order_date"]
+)
+
+# Create day of week
+sales["day_of_week"] = (
+    sales["order_date"].dt.day_name()
+)
+
+# Create month
+sales["month"] = (
+    sales["order_date"].dt.month
+)
+
+# Create weekend column
+sales["is_weekend"] = (
+    sales["order_date"].dt.dayofweek >= 5
+)
+
+# Display first 10 rows
+print(sales.head(10))
+
+
+EXPLANATION:
+
+The day_of_week feature identifies the day of the week, month stores the month number, and is_weekend identifies whether the order was placed on Saturday or Sunday.
+
+
+TASK 3
+
+Train a Random Forest Regressor to predict the next day's temperature using the lag and rolling features created in Task 1.
+
+CODE:
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+
+# Load data
+df = pd.read_csv("ahmedabad_temperature.csv")
+
+# Convert date
+df["date"] = pd.to_datetime(
+    df["date"]
+)
+
+# Sort by date
+df = df.sort_values("date")
+
+# Create features
+df["temp_lag_3"] = (
+    df["temperature"].shift(3)
+)
+
+df["temp_rolling_7"] = (
+    df["temperature"]
+    .rolling(window=7)
+    .mean()
+)
+
+# Remove missing values
+df_model = df.dropna().copy()
+
+# Features
+X = df_model[
+    [
+        "temp_lag_3",
+        "temp_rolling_7"
+    ]
+]
+
+# Target temperature
+y = df_model["temperature"]
+
+# Time-series split
+split = int(len(df_model) * 0.8)
+
+X_train = X.iloc[:split]
+X_test = X.iloc[split:]
+
+y_train = y.iloc[:split]
+y_test = y.iloc[split:]
+
+# Create Random Forest Regressor
+model = RandomForestRegressor(
+    n_estimators=100,
+    random_state=42
+)
+
+# Train model
+model.fit(
+    X_train,
+    y_train
+)
+
+# Predict test data
+predictions = model.predict(
+    X_test
+)
+
+# Predict next available temperature
+latest_features = X.iloc[-1:].values
+
+next_temperature = model.predict(
+    latest_features
+)
+
+print(
+    "Predicted Temperature for Next Available Date:",
+    next_temperature[0]
+)
+
+
+EXPLANATION:
+
+The Random Forest uses the previous temperature information to learn patterns and predict the next temperature. The last available lag and rolling-average values are used to generate the next prediction.
+
+
+TASK 4
+
+Calculate MAE, RMSE, and MAPE between the actual and predicted temperatures.
+
+CODE:
+
+import numpy as np
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error
+)
+
+# MAE
+mae = mean_absolute_error(
+    y_test,
+    predictions
+)
+
+# RMSE
+mse = mean_squared_error(
+    y_test,
+    predictions
+)
+
+rmse = np.sqrt(mse)
+
+
+# MAPE function
+def calculate_mape(actual, predicted):
+
+    actual = np.array(actual)
+    predicted = np.array(predicted)
+
+    # Avoid division by zero
+    mask = actual != 0
+
+    mape = np.mean(
+        np.abs(
+            (actual[mask] - predicted[mask])
+            / actual[mask]
+        )
+    ) * 100
+
+    return mape
+
+
+mape = calculate_mape(
+    y_test,
+    predictions
+)
+
+
+print("MAE:", mae)
+print("RMSE:", rmse)
+print("MAPE:", mape, "%")
+
+
+EXPLANATION:
+
+RMSE is the most sensitive to large errors because it squares the errors before averaging them, giving large mistakes more weight.
+
+
+METRIC MEANINGS:
+
+MAE:
+Shows the average absolute prediction error in degrees Celsius.
+
+RMSE:
+Shows the prediction error while giving greater importance to large errors.
+
+MAPE:
+Shows the average prediction error as a percentage of the actual temperature.
+
+
+TASK 5
+
+Calculate SMAPE (Symmetric Mean Absolute Percentage Error) for the time-series predictions.
+
+CODE:
+
+import numpy as np
+
+
+def calculate_smape(actual, predicted):
+
+    actual = np.array(actual)
+    predicted = np.array(predicted)
+
+    denominator = (
+        np.abs(actual) +
+        np.abs(predicted)
+    )
+
+    # Avoid division by zero
+    mask = denominator != 0
+
+    smape = np.mean(
+        2 * np.abs(
+            actual[mask] - predicted[mask]
+        ) / denominator[mask]
+    ) * 100
+
+    return smape
+
+
+# Calculate SMAPE
+smape = calculate_smape(
+    y_test,
+    predictions
+)
+
+print("SMAPE:", smape, "%")
+
+
+EXPLANATION:
+
+SMAPE measures prediction error as a percentage while treating actual and predicted values more symmetrically than MAPE. Its value is generally between 0% and 200%, with a lower value indicating better predictions.
+
+
+AI-GENERATED CODE AND CHANGES MADE:
+
+I used ChatGPT to generate the basic SMAPE calculation code.
+
+The main formula uses the absolute difference between actual and predicted values divided by the sum of their absolute values.
+
+One thing I learned is that SMAPE is called "symmetric" because it uses both the actual and predicted values in the denominator, unlike traditional MAPE, which uses only the actual value.
+
+
+COMPLETE CODE
+
+import pandas as pd
+import numpy as np
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error
+)
+
+
+# ==========================================
+# TASK 1: FEATURE ENGINEERING
+# ==========================================
+
+df = pd.read_csv(
+    "ahmedabad_temperature.csv"
+)
+
+df["date"] = pd.to_datetime(
+    df["date"]
+)
+
+df = df.sort_values(
+    "date"
+)
+
+# 3-day lag
+df["temp_lag_3"] = (
+    df["temperature"].shift(3)
+)
+
+# 7-day rolling average
+df["temp_rolling_7"] = (
+    df["temperature"]
+    .rolling(window=7)
+    .mean()
+)
+
+print("Temperature Dataset:")
+print(df.head(10))
+
+
+# Remove missing values
+df_model = df.dropna().copy()
+
+
+# ==========================================
+# TASK 3: RANDOM FOREST REGRESSION
+# ==========================================
+
+X = df_model[
+    [
+        "temp_lag_3",
+        "temp_rolling_7"
+    ]
+]
+
+y = df_model["temperature"]
+
+
+# Time-series split
+split = int(
+    len(df_model) * 0.8
+)
+
+X_train = X.iloc[:split]
+X_test = X.iloc[split:]
+
+y_train = y.iloc[:split]
+y_test = y.iloc[split:]
+
+
+# Create model
+model = RandomForestRegressor(
+    n_estimators=100,
+    random_state=42
+)
+
+# Train
+model.fit(
+    X_train,
+    y_train
+)
+
+# Predict test set
+predictions = model.predict(
+    X_test
+)
+
+
+# Predict next available day
+latest_features = X.iloc[-1:].values
+
+next_temperature = model.predict(
+    latest_features
+)
+
+print(
+    "\nNext Day Predicted Temperature:",
+    next_temperature[0]
+)
+
+
+# ==========================================
+# TASK 4: MAE, RMSE AND MAPE
+# ==========================================
+
+mae = mean_absolute_error(
+    y_test,
+    predictions
+)
+
+mse = mean_squared_error(
+    y_test,
+    predictions
+)
+
+rmse = np.sqrt(mse)
+
+
+def calculate_mape(actual, predicted):
+
+    actual = np.array(actual)
+    predicted = np.array(predicted)
+
+    mask = actual != 0
+
+    return np.mean(
+        np.abs(
+            (actual[mask] - predicted[mask])
+            / actual[mask]
+        )
+    ) * 100
+
+
+mape = calculate_mape(
+    y_test,
+    predictions
+)
+
+
+print("\nMODEL PERFORMANCE")
+
+print("MAE:", mae)
+print("RMSE:", rmse)
+print("MAPE:", mape, "%")
+
+
+# ==========================================
+# TASK 5: SMAPE
+# ==========================================
+
+def calculate_smape(actual, predicted):
+
+    actual = np.array(actual)
+    predicted = np.array(predicted)
+
+    denominator = (
+        np.abs(actual) +
+        np.abs(predicted)
+    )
+
+    mask = denominator != 0
+
+    return np.mean(
+        2 * np.abs(
+            actual[mask] - predicted[mask]
+        ) / denominator[mask]
+    ) * 100
+
+
+smape = calculate_smape(
+    y_test,
+    predictions
+)
+
+print(
+    "SMAPE:",
+    smape,
+    "%"
+)
+
+
+FINAL CONCLUSION:
+
+Feature engineering is important in time-series forecasting because previous observations can provide useful information about future values. Lag features capture past temperatures, while rolling averages smooth the data.
+
+Random Forest Regression can use these features to predict future temperatures. MAE, RMSE, MAPE, and SMAPE can then be used to evaluate the accuracy of the predictions. Among these metrics, RMSE is especially sensitive to large prediction errors.
