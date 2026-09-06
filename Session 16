@@ -1,0 +1,125 @@
+Confusion Matrix and Classification Metrics 
+
+Task 1 – Spam Filter Confusion Matrix
+
+Given: 
+- TP = 50  
+- TN = 120  
+- FP = 10  
+- FN = 20  
+
+Formulas:
+- Accuracy = \((TP + TN) / (TP + TN + FP + FN)\)  
+- Precision = \((TP) / (TP + FP)\)  
+- Recall = \((TP) / (TP + FN)\)  
+- F1 Score = \(2 \cdot (Precision \cdot Recall) / (Precision + Recall)\)  
+
+Calculation: 
+- Total = 200  
+- Accuracy = 170 / 200 = **85%**  
+- Precision = 50 / 60 = **83.33%**  
+- Recall = 50 / 70 = **71.43%**  
+- F1 Score = 0.7692 = **76.92%**
+
+Final Answers: 
+- Accuracy = 85%  
+- Precision = 83.33%  
+- Recall = 71.43%  
+- F1 Score = 76.92%  
+
+Task 2 – Python Function for Confusion Matrix
+
+Code:
+def print_confusion_matrix(tp, tn, fp, fn):
+    print("Confusion Matrix")
+    print("---------------------------")
+    print("                 Predicted")
+    print("              Spam   Not Spam")
+    print("Actual Spam    ", tp, "     ", fn)
+    print("Actual Not Spam", fp, "     ", tn)
+    print("---------------------------")
+
+
+print_confusion_matrix(50, 120, 10, 20)
+
+
+Output:
+
+Confusion Matrix
+---------------------------
+                 Predicted
+              Spam   Not Spam
+Actual Spam     50       20
+Actual Not Spam 10       120
+---------------------------
+
+
+Task 3 – Fake News Detection Model
+
+Given:  
+- TP = 60  
+- FN = 30  
+- TN = 120  
+- FP = 10  
+
+Code:
+tp = 60
+fn = 30
+tn = 120
+fp = 10
+
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+
+print("Precision:", precision)
+print("Precision (%):", precision * 100)
+print("Recall:", recall)
+print("Recall (%):", recall * 100)
+
+Calculation: 
+- Precision = 60 / 70 = 85.71%
+- Recall = 60 / 90 = 66.67%
+
+Final Answers:
+- Precision = 85.71%  
+- Recall = 66.67%  
+
+
+Task 4 – Food Delivery Fraud Detection
+
+Given:  
+- TP = 40  
+- TN = 150  
+- FP = 20  
+- FN = 10  
+
+Code:
+tp = 40
+tn = 150
+fp = 20
+fn = 10
+
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+f1 = 2 * (precision * recall) / (precision + recall)
+
+print("Precision:", precision)
+print("Recall:", recall)
+print("F1 Score:", f1)
+print("F1 Score (%):", f1 * 100)
+
+Calculation:
+- Precision = 40 / 60 = 66.67%
+- Recall = 40 / 50 = 80% 
+- F1 Score = 0.7273 = **72.73%**
+
+Final Answer:  
+- F1 Score = 72.73%  
+
+Final Conclusion
+- Accuracy measures overall correctness.  
+- Precision focuses on how many predicted positives were actually correct.  
+- Recall measures how many actual positives were captured.  
+- F1 Score balances precision and recall into a single metric.  
+
+Together, these metrics provide a complete evaluation of classification models like spam filters, fake news detectors, and fraud detection systems.  
