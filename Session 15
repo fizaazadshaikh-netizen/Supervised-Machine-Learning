@@ -1,0 +1,286 @@
+GRADIENT BOOSTING AND ADABOOST CLASSIFICATION
+
+
+TASK 1
+
+Install scikit-learn if needed, then load the Iris dataset and fit a GradientBoostingClassifier to classify flower species. Print the accuracy on the test set.
+
+INSTALLATION:
+
+If scikit-learn is not installed, run this command in a Jupyter Notebook cell:
+
+!pip install scikit-learn
+
+
+CODE:
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score
+
+# Load Iris dataset
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+# Split dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# Create Gradient Boosting model
+model = GradientBoostingClassifier(
+    random_state=42
+)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+
+print("Gradient Boosting Accuracy:", accuracy)
+
+
+EXPLANATION:
+
+Gradient Boosting builds multiple weak decision trees sequentially. Each new tree tries to correct the errors made by the previous trees. The final model combines all the trees to make better predictions.
+
+
+TASK 2
+
+Using a Flipkart product review dataset, train an AdaBoostClassifier to predict whether a review is positive or negative and display the classification report.
+
+CODE:
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.metrics import classification_report
+
+# Create a small Flipkart-style review dataset
+data = {
+    "review": [
+        "Excellent product and amazing quality",
+        "Very good product",
+        "I love this product",
+        "Worth the money",
+        "Amazing purchase",
+        "Very bad product",
+        "Worst product ever",
+        "Poor quality",
+        "Waste of money",
+        "Very disappointing",
+        "Excellent quality",
+        "Really good product",
+        "Terrible product",
+        "Not worth buying",
+        "Bad experience",
+        "Very happy with the product"
+    ],
+
+    "label": [
+        "positive",
+        "positive",
+        "positive",
+        "positive",
+        "positive",
+        "negative",
+        "negative",
+        "negative",
+        "negative",
+        "negative",
+        "positive",
+        "positive",
+        "negative",
+        "negative",
+        "negative",
+        "positive"
+    ]
+}
+
+df = pd.DataFrame(data)
+
+# Convert text into numerical features
+vectorizer = TfidfVectorizer()
+
+X = vectorizer.fit_transform(df["review"])
+y = df["label"]
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.25,
+    random_state=42,
+    stratify=y
+)
+
+# Create AdaBoost model
+model = AdaBoostClassifier(
+    n_estimators=50,
+    random_state=42
+)
+
+# Train model
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Classification report
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+
+EXPLANATION:
+
+The classification report shows precision, recall, and F1-score for positive and negative reviews.
+
+Precision:
+Shows how many reviews predicted as a class were actually from that class.
+
+Recall:
+Shows how many actual reviews from a class were correctly identified.
+
+F1-score:
+Provides a balance between precision and recall.
+
+
+TASK 3
+
+Explain the difference between a weak learner and a strong learner and give one real-world example of each.
+
+ANSWER:
+
+WEAK LEARNER:
+
+A weak learner is a simple model that performs only slightly better than random guessing. For example, a simple decision tree in an Instagram spam detector could use only one or two features, such as whether a message contains a suspicious link.
+
+STRONG LEARNER:
+
+A strong learner is a model that combines many weak learners to make accurate predictions. For example, Zomato could use an ensemble model made from many small decision trees to predict whether a restaurant review is likely to be positive or negative.
+
+MAIN DIFFERENCE:
+
+A weak learner is simple and has limited predictive power, while a strong learner combines multiple learners to produce more accurate and reliable predictions.
+
+
+TASK 4
+
+Tune n_estimators and learning_rate in GradientBoostingClassifier. Try at least 3 combinations and report the best accuracy.
+
+CODE:
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score
+
+# Load Iris dataset
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# Parameter combinations
+combinations = [
+    (50, 0.1),
+    (100, 0.1),
+    (100, 0.05),
+    (150, 0.1),
+    (150, 0.05)
+]
+
+best_accuracy = 0
+best_parameters = None
+
+# Try different combinations
+for n_estimators, learning_rate in combinations:
+
+    model = GradientBoostingClassifier(
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        random_state=42
+    )
+
+    # Train model
+    model.fit(X_train, y_train)
+
+    # Predict
+    y_pred = model.predict(X_test)
+
+    # Accuracy
+    accuracy = accuracy_score(
+        y_test,
+        y_pred
+    )
+
+    print(
+        "n_estimators =", n_estimators,
+        "learning_rate =", learning_rate,
+        "Accuracy =", accuracy
+    )
+
+    # Store best result
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        best_parameters = (
+            n_estimators,
+            learning_rate
+        )
+
+
+print("\nBest Accuracy:", best_accuracy)
+
+print(
+    "Best n_estimators:",
+    best_parameters[0]
+)
+
+print(
+    "Best learning_rate:",
+    best_parameters[1]
+)
+
+
+EXPLANATION:
+
+n_estimators controls how many boosting stages are used. A larger value can allow the model to learn more complex patterns.
+
+learning_rate controls how much each new tree contributes to the final model. A smaller learning rate usually requires more trees.
+
+The best combination is the one that gives the highest test accuracy on the chosen train-test split.
+
+
+TASK 5
+
+Real-world use case of boosting in a popular Indian app.
+
+EXAMPLE: PAYTM – FRAUD DETECTION
+
+ANSWER:
+
+Boosting could be used in Paytm to detect suspicious transactions by learning patterns from previous fraudulent and genuine transactions. Features such as transaction amount, transaction frequency, location, device information, and transaction time could be used by the model. Multiple weak learners can work together to identify complex fraud patterns. This can help detect suspicious transactions more accurately while reducing false alerts for genuine users.
+
+
+FINAL CONCLUSION:
+
+Boosting is an ensemble learning technique that combines multiple weak learners to create a stronger model. Gradient Boosting builds models sequentially, where each new model focuses on correcting previous errors. AdaBoost also combines weak learners by giving more attention to incorrectly classified examples. Boosting can improve prediction accuracy and is useful for applications such as fraud detection, spam filtering, recommendations, and classification.
