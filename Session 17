@@ -1,0 +1,121 @@
+
+Credit Card Fraud Detection – Imbalanced Classification
+
+Task 1 – Logistic Regression Model
+
+Code:
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+df = pd.read_csv("creditcard.csv")
+X = df.drop("Class", axis=1)
+y = df["Class"]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+model = LogisticRegression(max_iter=1000, class_weight="balanced", random_state=42)
+model.fit(X_train_scaled, y_train)
+y_pred = model.predict(X_test_scaled)
+y_prob = model.predict_proba(X_test_scaled)[:, 1]
+print("Model training completed.")
+print("Training rows:", len(X_train))
+print("Testing rows:", len(X_test))
+
+Explanation: 
+Fraud detection is an imbalanced classification problem because fraud cases are rare compared to normal transactions. Logistic Regression with `class_weight="balanced"` helps adjust for this imbalance. StandardScaler ensures features are normalized before training.
+
+
+Task 2 – ROC Curve and AUC
+
+Code:
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, roc_auc_score
+
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+auc_score = roc_auc_score(y_test, y_prob)
+
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, label="ROC Curve (AUC = {:.3f})".format(auc_score))
+plt.plot([0, 1], [0, 1], linestyle="--", label="Random Classifier")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve - Credit Card Fraud Detection")
+plt.legend()
+plt.grid()
+plt.show()
+
+print("AUC Score:", auc_score)
+
+Explanation:
+The ROC curve shows the trade‑off between true positives and false positives. AUC measures overall discrimination ability. A higher AUC (closer to 1) indicates better fraud detection.
+
+Task 3 – Precision-Recall Curve
+
+Code:
+from sklearn.metrics import precision_recall_curve
+
+precision, recall, thresholds = precision_recall_curve(y_test, y_prob)
+
+plt.figure(figsize=(8, 6))
+plt.plot(recall, precision, label="Precision-Recall Curve")
+plt.xlabel("Recall")
+plt.ylabel("Precision")
+plt.title("Precision-Recall Curve - Fraud Detection")
+plt.legend()
+plt.grid()
+plt.show()
+
+Explanation:
+The Precision-Recall curve is more informative for imbalanced datasets. It highlights the trade‑off between catching fraud (recall) and avoiding false alarms (precision).
+
+Task 4 – Log Loss
+
+Code:
+from sklearn.metrics import log_loss
+
+loss = log_loss(y_test, y_prob)
+print("Log Loss:", loss)
+
+Explanation:  
+Log Loss evaluates how well predicted probabilities match actual outcomes. Lower values indicate better probability calibration.
+
+Task 5 – Highly Imbalanced Test Set (2% Fraud)
+
+Code:
+from sklearn.metrics import accuracy_score, roc_auc_score, log_loss
+normal = df[df["Class"] == 0]
+fraud = df[df["Class"] == 1]
+fraud_sample = fraud.sample(n=min(49, len(fraud)), random_state=42)
+normal_sample = normal.sample(n=min(2401, len(normal)), random_state=42)
+imbalanced_test = pd.concat([normal_sample, fraud_sample]).sample(frac=1, random_state=42)
+X_imbalanced = imbalanced_test.drop("Class", axis=1)
+y_imbalanced = imbalanced_test["Class"]
+
+X_imbalanced_scaled = scaler.transform(X_imbalanced)
+
+y_imbalanced_prob = model.predict_proba(X_imbalanced_scaled)[:, 1]
+y_imbalanced_pred = model.predict(X_imbalanced_scaled)
+
+accuracy = accuracy_score(y_imbalanced, y_imbalanced_pred)
+auc = roc_auc_score(y_imbalanced, y_imbalanced_prob)
+loss = log_loss(y_imbalanced, y_imbalanced_prob)
+
+print("Positive Class Percentage:", y_imbalanced.mean() * 100)
+print("Accuracy:", accuracy)
+print("AUC:", auc)
+print("Log Loss:", loss)
+
+Explanation: 
+When the test set is adjusted to only 2% fraud cases, accuracy becomes misleading because predicting “all normal” yields high accuracy. AUC and Precision-Recall curves remain more reliable for evaluating fraud detection performance.
+
+Final Conclusion
+
+- Credit card fraud detection is a highly imbalanced classification problem.  
+- Accuracy alone is not reliable because fraud cases are rare.  
+- ROC-AUC and Precision-Recall curves provide better insights into model performance.  
+- Log Loss helps evaluate probability calibration.  
+- Balancing techniques (like `class_weight="balanced"`) and careful metric selection are essential for building effective fraud detection models.  
