@@ -1,0 +1,758 @@
+ZOMATO RESTAURANT DATA ANALYSIS AND MACHINE LEARNING
+
+
+TASK 1
+
+Download the Zomato Restaurants Kaggle dataset, load it into a pandas DataFrame, and display the first 5 rows along with info() and describe() output.
+
+CODE:
+
+import pandas as pd
+import numpy as np
+
+# Load Zomato dataset
+df = pd.read_csv("zomato.csv")
+
+# Display first 5 rows
+print("FIRST 5 ROWS:")
+print(df.head())
+
+# Display information about the dataset
+print("\nDATASET INFORMATION:")
+df.info()
+
+# Display statistical summary
+print("\nSTATISTICAL SUMMARY:")
+print(df.describe())
+
+
+EXPLANATION:
+
+head() displays the first five rows of the dataset. info() shows the number of rows, columns, data types, and non-null values. describe() provides statistical information such as count, mean, standard deviation, minimum, and maximum values.
+
+
+TASK 2
+
+Check the Zomato dataset for missing values and outliers in the cost and rating columns. Handle them using pandas and NumPy.
+
+CODE:
+
+# Check missing values
+print("Missing values:")
+print(df[["cost", "rating"]].isnull().sum())
+
+
+# Convert columns to numeric
+df["cost"] = pd.to_numeric(
+    df["cost"],
+    errors="coerce"
+)
+
+df["rating"] = pd.to_numeric(
+    df["rating"],
+    errors="coerce"
+)
+
+
+# Fill missing values with median
+df["cost"] = df["cost"].fillna(
+    df["cost"].median()
+)
+
+df["rating"] = df["rating"].fillna(
+    df["rating"].median()
+)
+
+
+# Function to find outliers using IQR
+def find_outliers(data, column):
+
+    Q1 = data[column].quantile(0.25)
+    Q3 = data[column].quantile(0.75)
+
+    IQR = Q3 - Q1
+
+    lower = Q1 - 1.5 * IQR
+    upper = Q3 + 1.5 * IQR
+
+    outliers = data[
+        (data[column] < lower) |
+        (data[column] > upper)
+    ]
+
+    return outliers, lower, upper
+
+
+# Find cost outliers
+cost_outliers, cost_lower, cost_upper = find_outliers(
+    df,
+    "cost"
+)
+
+print("\nNumber of cost outliers:",
+      len(cost_outliers))
+
+
+# Find rating outliers
+rating_outliers, rating_lower, rating_upper = find_outliers(
+    df,
+    "rating"
+)
+
+print("Number of rating outliers:",
+      len(rating_outliers))
+
+
+# Remove outliers
+df = df[
+    (df["cost"] >= cost_lower) &
+    (df["cost"] <= cost_upper) &
+    (df["rating"] >= rating_lower) &
+    (df["rating"] <= rating_upper)
+]
+
+print("\nDataset shape after removing outliers:")
+print(df.shape)
+
+
+EXPLANATION:
+
+Missing cost and rating values are replaced with their median values. The IQR method is then used to identify unusually high or low values, and these outliers are removed from the dataset.
+
+
+TASK 3
+
+Encode the cuisine and location categorical columns and scale cost and rating using StandardScaler.
+
+CODE:
+
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
+
+# Make sure categorical columns are strings
+df["cuisine"] = df["cuisine"].fillna("Unknown")
+df["location"] = df["location"].fillna("Unknown")
+
+# One-hot encode categorical columns
+encoder = OneHotEncoder(
+    handle_unknown="ignore",
+    sparse_output=False
+)
+
+encoded_data = encoder.fit_transform(
+    df[["cuisine", "location"]]
+)
+
+# Convert encoded data to DataFrame
+encoded_df = pd.DataFrame(
+    encoded_data,
+    columns=encoder.get_feature_names_out(
+        ["cuisine", "location"]
+    ),
+    index=df.index
+)
+
+# Scale cost and rating
+scaler = StandardScaler()
+
+scaled_data = scaler.fit_transform(
+    df[["cost", "rating"]]
+)
+
+scaled_df = pd.DataFrame(
+    scaled_data,
+    columns=["cost_scaled", "rating_scaled"],
+    index=df.index
+)
+
+# Combine all processed data
+processed_df = pd.concat(
+    [
+        scaled_df,
+        encoded_df
+    ],
+    axis=1
+)
+
+print("PROCESSED DATA:")
+print(processed_df.head())
+
+
+EXPLANATION:
+
+One-hot encoding converts categorical values into numerical columns. StandardScaler changes the cost and rating values so that they have approximately mean 0 and standard deviation 1.
+
+
+NOTE:
+
+If your scikit-learn version gives an error for:
+
+sparse_output=False
+
+use:
+
+sparse=False
+
+instead.
+
+
+TASK 4
+
+Split the Zomato data into training and testing sets and train Logistic Regression and Random Forest models to predict whether a restaurant has a rating above 4.0.
+
+CODE:
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score
+
+
+# Create target variable
+df["high_rating"] = (
+    df["rating"] > 4.0
+).astype(int)
+
+
+# Select features
+X = processed_df
+
+# Target
+y = df["high_rating"]
+
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+
+# -----------------------------------
+# LOGISTIC REGRESSION
+# -----------------------------------
+
+logistic_model = LogisticRegression(
+    max_iter=1000
+)
+
+logistic_model.fit(
+    X_train,
+    y_train
+)
+
+logistic_prob = logistic_model.predict_proba(
+    X_test
+)[:, 1]
+
+logistic_auc = roc_auc_score(
+    y_test,
+    logistic_prob
+)
+
+
+# -----------------------------------
+# RANDOM FOREST
+# -----------------------------------
+
+rf_model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+rf_model.fit(
+    X_train,
+    y_train
+)
+
+rf_prob = rf_model.predict_proba(
+    X_test
+)[:, 1]
+
+rf_auc = roc_auc_score(
+    y_test,
+    rf_prob
+)
+
+
+# Display results
+print("Logistic Regression ROC-AUC:",
+      logistic_auc)
+
+print("Random Forest ROC-AUC:",
+      rf_auc)
+
+
+# Compare models
+if logistic_auc > rf_auc:
+
+    print("\nLogistic Regression performed better.")
+
+elif rf_auc > logistic_auc:
+
+    print("\nRandom Forest performed better.")
+
+else:
+
+    print("\nBoth models performed equally.")
+
+
+EXPLANATION:
+
+ROC-AUC measures how well a model distinguishes between restaurants rated above 4.0 and restaurants rated 4.0 or below. The model with the higher ROC-AUC is considered better at separating the two classes.
+
+
+TASK 5
+
+Use SMOTE if the high-rating class is much smaller than the low-rating class. Then use GridSearchCV to tune Random Forest parameters.
+
+INSTALLATION:
+
+If imbalanced-learn is not installed, run:
+
+!pip install imbalanced-learn
+
+
+CODE:
+
+from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score
+
+
+# Check class distribution
+print("Original Class Distribution:")
+print(y_train.value_counts())
+
+
+# Apply SMOTE only to training data
+smote = SMOTE(
+    random_state=42
+)
+
+X_train_smote, y_train_smote = smote.fit_resample(
+    X_train,
+    y_train
+)
+
+
+print("\nClass Distribution After SMOTE:")
+print(
+    pd.Series(y_train_smote).value_counts()
+)
+
+
+# Create Random Forest
+rf = RandomForestClassifier(
+    random_state=42
+)
+
+
+# Parameter grid
+param_grid = {
+
+    "n_estimators": [
+        50,
+        100,
+        200
+    ],
+
+    "max_depth": [
+        None,
+        5,
+        10
+    ]
+}
+
+
+# GridSearchCV
+grid_search = GridSearchCV(
+    rf,
+    param_grid,
+    cv=3,
+    scoring="roc_auc",
+    n_jobs=-1
+)
+
+
+# Train model
+grid_search.fit(
+    X_train_smote,
+    y_train_smote
+)
+
+
+# Best parameters
+print("\nBest Parameters:")
+print(
+    grid_search.best_params_
+)
+
+
+# Best cross-validation score
+print(
+    "Best CV ROC-AUC:",
+    grid_search.best_score_
+)
+
+
+# Evaluate on original test data
+best_model = grid_search.best_estimator_
+
+test_prob = best_model.predict_proba(
+    X_test
+)[:, 1]
+
+test_auc = roc_auc_score(
+    y_test,
+    test_prob
+)
+
+print(
+    "Test ROC-AUC:",
+    test_auc
+)
+
+
+EXPLANATION:
+
+SMOTE balances the training data by creating synthetic examples of the minority class. GridSearchCV then searches for the best combination of n_estimators and max_depth. The final model is evaluated on the original test set so that the test results remain realistic.
+
+
+COMPLETE CODE
+
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score
+
+from imblearn.over_sampling import SMOTE
+
+
+# ==========================================
+# TASK 1: LOAD DATA
+# ==========================================
+
+df = pd.read_csv("zomato.csv")
+
+print("FIRST 5 ROWS:")
+print(df.head())
+
+print("\nDATASET INFORMATION:")
+df.info()
+
+print("\nDESCRIBE:")
+print(df.describe())
+
+
+# ==========================================
+# TASK 2: MISSING VALUES AND OUTLIERS
+# ==========================================
+
+df["cost"] = pd.to_numeric(
+    df["cost"],
+    errors="coerce"
+)
+
+df["rating"] = pd.to_numeric(
+    df["rating"],
+    errors="coerce"
+)
+
+print("\nMISSING VALUES:")
+print(
+    df[["cost", "rating"]].isnull().sum()
+)
+
+
+# Fill missing values
+df["cost"] = df["cost"].fillna(
+    df["cost"].median()
+)
+
+df["rating"] = df["rating"].fillna(
+    df["rating"].median()
+)
+
+
+# IQR for cost
+Q1_cost = df["cost"].quantile(0.25)
+Q3_cost = df["cost"].quantile(0.75)
+
+IQR_cost = Q3_cost - Q1_cost
+
+lower_cost = Q1_cost - 1.5 * IQR_cost
+upper_cost = Q3_cost + 1.5 * IQR_cost
+
+
+# IQR for rating
+Q1_rating = df["rating"].quantile(0.25)
+Q3_rating = df["rating"].quantile(0.75)
+
+IQR_rating = Q3_rating - Q1_rating
+
+lower_rating = Q1_rating - 1.5 * IQR_rating
+upper_rating = Q3_rating + 1.5 * IQR_rating
+
+
+# Remove outliers
+df = df[
+    (df["cost"] >= lower_cost) &
+    (df["cost"] <= upper_cost) &
+    (df["rating"] >= lower_rating) &
+    (df["rating"] <= upper_rating)
+]
+
+
+# ==========================================
+# TASK 3: ENCODING AND SCALING
+# ==========================================
+
+df["cuisine"] = df["cuisine"].fillna(
+    "Unknown"
+)
+
+df["location"] = df["location"].fillna(
+    "Unknown"
+)
+
+encoder = OneHotEncoder(
+    handle_unknown="ignore",
+    sparse_output=False
+)
+
+encoded = encoder.fit_transform(
+    df[["cuisine", "location"]]
+)
+
+encoded_df = pd.DataFrame(
+    encoded,
+    columns=encoder.get_feature_names_out(
+        ["cuisine", "location"]
+    ),
+    index=df.index
+)
+
+
+scaler = StandardScaler()
+
+scaled = scaler.fit_transform(
+    df[["cost", "rating"]]
+)
+
+scaled_df = pd.DataFrame(
+    scaled,
+    columns=["cost_scaled", "rating_scaled"],
+    index=df.index
+)
+
+
+processed_df = pd.concat(
+    [
+        scaled_df,
+        encoded_df
+    ],
+    axis=1
+)
+
+
+print("\nPROCESSED DATA:")
+print(processed_df.head())
+
+
+# ==========================================
+# TASK 4: CREATE TARGET AND TRAIN MODELS
+# ==========================================
+
+df["high_rating"] = (
+    df["rating"] > 4.0
+).astype(int)
+
+X = processed_df
+y = df["high_rating"]
+
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+
+# Logistic Regression
+logistic_model = LogisticRegression(
+    max_iter=1000
+)
+
+logistic_model.fit(
+    X_train,
+    y_train
+)
+
+logistic_prob = logistic_model.predict_proba(
+    X_test
+)[:, 1]
+
+logistic_auc = roc_auc_score(
+    y_test,
+    logistic_prob
+)
+
+
+# Random Forest
+rf_model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+rf_model.fit(
+    X_train,
+    y_train
+)
+
+rf_prob = rf_model.predict_proba(
+    X_test
+)[:, 1]
+
+rf_auc = roc_auc_score(
+    y_test,
+    rf_prob
+)
+
+
+print("\nMODEL RESULTS:")
+
+print(
+    "Logistic Regression ROC-AUC:",
+    logistic_auc
+)
+
+print(
+    "Random Forest ROC-AUC:",
+    rf_auc
+)
+
+
+if logistic_auc > rf_auc:
+
+    print(
+        "Logistic Regression performed better."
+    )
+
+else:
+
+    print(
+        "Random Forest performed better."
+    )
+
+
+# ==========================================
+# TASK 5: SMOTE + GRIDSEARCH
+# ==========================================
+
+print("\nCLASS DISTRIBUTION:")
+print(y_train.value_counts())
+
+
+# Apply SMOTE
+smote = SMOTE(
+    random_state=42
+)
+
+X_train_smote, y_train_smote = smote.fit_resample(
+    X_train,
+    y_train
+)
+
+print("\nAFTER SMOTE:")
+print(
+    pd.Series(
+        y_train_smote
+    ).value_counts()
+)
+
+
+# Random Forest
+rf = RandomForestClassifier(
+    random_state=42
+)
+
+
+# Parameter grid
+param_grid = {
+    "n_estimators": [
+        50,
+        100,
+        200
+    ],
+
+    "max_depth": [
+        None,
+        5,
+        10
+    ]
+}
+
+
+# Grid Search
+grid_search = GridSearchCV(
+    rf,
+    param_grid,
+    cv=3,
+    scoring="roc_auc",
+    n_jobs=-1
+)
+
+grid_search.fit(
+    X_train_smote,
+    y_train_smote
+)
+
+
+print("\nBEST PARAMETERS:")
+print(
+    grid_search.best_params_
+)
+
+
+print(
+    "BEST CV ROC-AUC:",
+    grid_search.best_score_
+)
+
+
+# Test the best model
+best_model = grid_search.best_estimator_
+
+test_prob = best_model.predict_proba(
+    X_test
+)[:, 1]
+
+test_auc = roc_auc_score(
+    y_test,
+    test_prob
+)
+
+print(
+    "FINAL TEST ROC-AUC:",
+    test_auc
+)
+
+
+FINAL CONCLUSION:
+
+The Zomato dataset is first cleaned by handling missing values and outliers. Categorical features such as cuisine and location are converted into numerical values using OneHotEncoder, while cost and rating are standardized using StandardScaler.
+
+Logistic Regression and Random Forest are then trained to predict whether a restaurant has a rating above 4.0. Their ROC-AUC scores are compared to determine which model performs better.
+
+If the high-rating class is strongly imbalanced, SMOTE is applied only to the training data. GridSearchCV is then used to find the best Random Forest values for n_estimators and max_depth.
