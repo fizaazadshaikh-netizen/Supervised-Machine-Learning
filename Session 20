@@ -1,0 +1,498 @@
+TIME SERIES ANALYSIS – DAILY TEMPERATURE
+
+
+TASK 1
+
+Download a public daily temperature dataset for an Indian city, load it using pandas, and plot the raw temperature data.
+
+For this example, suppose the downloaded CSV file is named:
+
+indian_city_temperature.csv
+
+The CSV should contain at least these columns:
+
+date
+temperature
+
+
+CODE:
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load dataset
+df = pd.read_csv("indian_city_temperature.csv")
+
+# Convert date column to datetime
+df["date"] = pd.to_datetime(df["date"])
+
+# Sort by date
+df = df.sort_values("date")
+
+# Set date as index
+df.set_index("date", inplace=True)
+
+# Display first 5 rows
+print(df.head())
+
+# Plot raw temperature data
+plt.figure(figsize=(12, 5))
+
+plt.plot(
+    df.index,
+    df["temperature"]
+)
+
+plt.xlabel("Date")
+plt.ylabel("Temperature (°C)")
+plt.title("Daily Temperature")
+plt.grid()
+
+plt.show()
+
+
+EXPLANATION:
+
+The raw time-series plot helps us visually identify long-term trends and repeating seasonal patterns. For example, Indian city temperatures generally show warmer and cooler periods during different parts of the year.
+
+
+TASK 2
+
+Decompose the temperature time series into trend, seasonal, and residual components using seasonal_decompose().
+
+CODE:
+
+from statsmodels.tsa.seasonal import seasonal_decompose
+import matplotlib.pyplot as plt
+
+# Perform seasonal decomposition
+decomposition = seasonal_decompose(
+    df["temperature"],
+    model="additive",
+    period=365
+)
+
+# Plot all components
+decomposition.plot()
+
+plt.show()
+
+
+EXPLANATION:
+
+The decomposition separates the temperature series into:
+
+Trend:
+The long-term increase or decrease in temperature.
+
+Seasonal:
+The repeating yearly temperature pattern.
+
+Residual:
+The random variation that remains after removing trend and seasonality.
+
+The period is set to 365 because daily temperature data usually has an annual seasonal cycle.
+
+
+TASK 3
+
+Check whether the temperature time series is stationary using the Augmented Dickey-Fuller (ADF) test.
+
+CODE:
+
+from statsmodels.tsa.stattools import adfuller
+
+# Perform ADF test
+result = adfuller(
+    df["temperature"].dropna()
+)
+
+# Print test statistic
+print("ADF Test Statistic:", result[0])
+
+# Print p-value
+print("p-value:", result[1])
+
+
+# Interpret result
+if result[1] < 0.05:
+
+    print(
+        "The series is likely stationary."
+    )
+
+else:
+
+    print(
+        "The series is likely non-stationary."
+    )
+
+
+EXPLANATION:
+
+The ADF test checks whether the time series is stationary.
+
+If p-value < 0.05:
+The series is likely stationary.
+
+If p-value >= 0.05:
+The series is likely non-stationary.
+
+Temperature data often contains seasonality, so the original series may be non-stationary.
+
+
+TASK 4
+
+Apply a moving average with a window size of 7 and plot the original and smoothed temperature series.
+
+CODE:
+
+# Calculate 7-day moving average
+df["moving_average"] = (
+    df["temperature"]
+    .rolling(window=7)
+    .mean()
+)
+
+# Plot original and smoothed data
+plt.figure(figsize=(12, 5))
+
+plt.plot(
+    df.index,
+    df["temperature"],
+    label="Original Temperature"
+)
+
+plt.plot(
+    df.index,
+    df["moving_average"],
+    label="7-Day Moving Average"
+)
+
+plt.xlabel("Date")
+plt.ylabel("Temperature (°C)")
+plt.title("Original vs 7-Day Moving Average")
+
+plt.legend()
+plt.grid()
+
+plt.show()
+
+
+EXPLANATION:
+
+The 7-day moving average smooths short-term fluctuations and makes the underlying temperature pattern easier to observe. It reduces the effect of sudden daily changes in temperature.
+
+
+TASK 5
+
+Fit an ARIMA model and forecast the next 7 days.
+
+Based on the ADF test and visual analysis, suppose the original series is non-stationary. We therefore use d=1.
+
+For this simple example, we will use:
+
+p = 1
+d = 1
+q = 1
+
+Therefore:
+
+ARIMA(1,1,1)
+
+
+CODE:
+
+from statsmodels.tsa.arima.model import ARIMA
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Create ARIMA model
+model = ARIMA(
+    df["temperature"],
+    order=(1, 1, 1)
+)
+
+# Fit model
+model_fit = model.fit()
+
+# Forecast next 7 days
+forecast = model_fit.forecast(
+    steps=7
+)
+
+print("Next 7 Days Temperature Forecast:")
+print(forecast)
+
+
+# Create future dates
+future_dates = pd.date_range(
+    start=df.index[-1] + pd.Timedelta(days=1),
+    periods=7
+)
+
+# Plot original data
+plt.figure(figsize=(12, 5))
+
+plt.plot(
+    df.index,
+    df["temperature"],
+    label="Original Temperature"
+)
+
+# Plot forecast
+plt.plot(
+    future_dates,
+    forecast,
+    marker="o",
+    label="7-Day Forecast"
+)
+
+plt.xlabel("Date")
+plt.ylabel("Temperature (°C)")
+plt.title("ARIMA Temperature Forecast")
+
+plt.legend()
+plt.grid()
+
+plt.show()
+
+
+EXPLANATION:
+
+ARIMA(1,1,1) uses one autoregressive term, one level of differencing, and one moving-average term. Differencing with d=1 helps make a non-stationary temperature series more suitable for ARIMA. The model then forecasts the temperature for the next seven days.
+
+
+IMPORTANT NOTE ABOUT ARIMA:
+
+The exact ARIMA parameters should ideally be selected after examining the data.
+
+If the ADF test gives:
+
+p-value < 0.05
+
+the series is already stationary, so d can be set to 0.
+
+If:
+
+p-value >= 0.05
+
+d=1 is a reasonable starting point.
+
+The values of p and q can then be selected using ACF/PACF plots or by comparing different ARIMA models using AIC.
+
+
+OPTIONAL ACF/PACF CODE:
+
+from statsmodels.graphics.tsaplots import (
+    plot_acf,
+    plot_pacf
+)
+
+# Difference the series if necessary
+temperature_diff = df["temperature"].diff().dropna()
+
+# ACF
+plot_acf(temperature_diff)
+
+plt.show()
+
+# PACF
+plot_pacf(temperature_diff)
+
+plt.show()
+
+
+COMPLETE CODE
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.arima.model import ARIMA
+
+
+# ==========================================
+# TASK 1: LOAD DATA
+# ==========================================
+
+df = pd.read_csv(
+    "indian_city_temperature.csv"
+)
+
+df["date"] = pd.to_datetime(
+    df["date"]
+)
+
+df = df.sort_values(
+    "date"
+)
+
+df.set_index(
+    "date",
+    inplace=True
+)
+
+print(df.head())
+
+
+# Plot raw temperature
+plt.figure(figsize=(12, 5))
+
+plt.plot(
+    df.index,
+    df["temperature"]
+)
+
+plt.xlabel("Date")
+plt.ylabel("Temperature (°C)")
+plt.title("Daily Temperature")
+
+plt.grid()
+plt.show()
+
+
+# ==========================================
+# TASK 2: DECOMPOSITION
+# ==========================================
+
+decomposition = seasonal_decompose(
+    df["temperature"],
+    model="additive",
+    period=365
+)
+
+decomposition.plot()
+
+plt.show()
+
+
+# ==========================================
+# TASK 3: ADF TEST
+# ==========================================
+
+result = adfuller(
+    df["temperature"].dropna()
+)
+
+print(
+    "ADF Test Statistic:",
+    result[0]
+)
+
+print(
+    "p-value:",
+    result[1]
+)
+
+if result[1] < 0.05:
+
+    print(
+        "The series is likely stationary."
+    )
+
+else:
+
+    print(
+        "The series is likely non-stationary."
+    )
+
+
+# ==========================================
+# TASK 4: MOVING AVERAGE
+# ==========================================
+
+df["moving_average"] = (
+    df["temperature"]
+    .rolling(window=7)
+    .mean()
+)
+
+plt.figure(figsize=(12, 5))
+
+plt.plot(
+    df.index,
+    df["temperature"],
+    label="Original"
+)
+
+plt.plot(
+    df.index,
+    df["moving_average"],
+    label="7-Day Moving Average"
+)
+
+plt.xlabel("Date")
+plt.ylabel("Temperature (°C)")
+plt.title("Temperature with 7-Day Moving Average")
+
+plt.legend()
+plt.grid()
+
+plt.show()
+
+
+# ==========================================
+# TASK 5: ARIMA
+# ==========================================
+
+# ARIMA(1,1,1)
+model = ARIMA(
+    df["temperature"],
+    order=(1, 1, 1)
+)
+
+model_fit = model.fit()
+
+# Forecast next 7 days
+forecast = model_fit.forecast(
+    steps=7
+)
+
+print(
+    "\n7-Day Temperature Forecast:"
+)
+
+print(forecast)
+
+
+# Future dates
+future_dates = pd.date_range(
+    start=df.index[-1] +
+    pd.Timedelta(days=1),
+    periods=7
+)
+
+
+# Plot forecast
+plt.figure(figsize=(12, 5))
+
+plt.plot(
+    df.index,
+    df["temperature"],
+    label="Original Temperature"
+)
+
+plt.plot(
+    future_dates,
+    forecast,
+    marker="o",
+    label="Forecast"
+)
+
+plt.xlabel("Date")
+plt.ylabel("Temperature (°C)")
+plt.title("ARIMA 7-Day Temperature Forecast")
+
+plt.legend()
+plt.grid()
+
+plt.show()
+
+
+FINAL CONCLUSION:
+
+Time series analysis helps identify trend, seasonality, and random variation in daily temperature data. Seasonal decomposition separates these components, while the ADF test checks stationarity. A 7-day moving average smooths short-term fluctuations, and ARIMA can be used to forecast future temperatures.
+
+For this assignment, ARIMA(1,1,1) is used as a simple starting model when the ADF test indicates that differencing is required. The exact best parameters should be selected based on the actual dataset and ADF/ACF/PACF analysis.
