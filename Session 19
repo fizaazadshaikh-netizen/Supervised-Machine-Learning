@@ -1,0 +1,611 @@
+
+HYPERPARAMETER TUNING, GRIDSEARCHCV, RANDOMIZEDSEARCHCV AND SMOTE
+
+
+TASK 1
+
+Use GridSearchCV to tune max_depth and n_estimators of a RandomForestClassifier for classifying product reviews as positive or negative.
+
+For this example, assume a CSV file named "product_reviews.csv" containing:
+
+review     -> Review text
+sentiment  -> positive or negative
+
+
+CODE:
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load dataset
+df = pd.read_csv("product_reviews.csv")
+
+# Remove missing values
+df = df.dropna(subset=["review", "sentiment"])
+
+# Convert review text into numerical features
+vectorizer = TfidfVectorizer(max_features=1000)
+
+X = vectorizer.fit_transform(df["review"])
+y = df["sentiment"]
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# Create Random Forest
+rf = RandomForestClassifier(
+    random_state=42
+)
+
+# Parameter grid
+param_grid = {
+    "n_estimators": [50, 100, 200],
+    "max_depth": [5, 10, None]
+}
+
+# Grid Search
+grid = GridSearchCV(
+    rf,
+    param_grid,
+    cv=5,
+    scoring="accuracy"
+)
+
+# Train
+grid.fit(X_train, y_train)
+
+# Best parameters
+print("Best Parameters:", grid.best_params_)
+print("Best CV Accuracy:", grid.best_score_)
+
+# Test predictions
+y_pred = grid.predict(X_test)
+
+print(
+    "Test Accuracy:",
+    accuracy_score(y_test, y_pred)
+)
+
+
+EXPLANATION:
+
+GridSearchCV tests every combination of the specified hyperparameters.
+
+n_estimators controls the number of trees in the Random Forest.
+
+max_depth controls the maximum depth of each decision tree.
+
+The combination with the best cross-validation score is selected automatically.
+
+
+TASK 2
+
+Use RandomizedSearchCV to tune C and gamma for an SVM classifier that predicts whether an Instagram post will receive high or low engagement.
+
+CODE:
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+
+# Create Instagram-style dataset
+data = {
+    "caption_length": [
+        20, 40, 60, 80, 100,
+        120, 140, 160, 180, 200,
+        25, 45, 65, 85, 105,
+        125, 145, 165, 185, 205
+    ],
+
+    "posting_hour": [
+        8, 10, 12, 14, 18,
+        20, 21, 22, 9, 11,
+        13, 15, 17, 19, 20,
+        21, 7, 16, 18, 22
+    ],
+
+    "hashtag_count": [
+        2, 4, 5, 8, 10,
+        12, 15, 18, 20, 25,
+        1, 3, 6, 7, 11,
+        14, 16, 19, 22, 24
+    ],
+
+    "engagement": [
+        0, 0, 0, 0, 1,
+        1, 1, 1, 1, 1,
+        0, 0, 0, 0, 1,
+        1, 1, 1, 1, 1
+    ]
+}
+
+df = pd.DataFrame(data)
+
+# Features and target
+X = df[
+    [
+        "caption_length",
+        "posting_hour",
+        "hashtag_count"
+    ]
+]
+
+y = df["engagement"]
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
+)
+
+# Scale features
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Create SVM
+svm = SVC(
+    kernel="rbf",
+    random_state=42
+)
+
+# Parameters to search
+param_dist = {
+    "C": [0.1, 1, 10, 100],
+    "gamma": [0.001, 0.01, 0.1, 1]
+}
+
+# Randomized Search
+random_search = RandomizedSearchCV(
+    svm,
+    param_distributions=param_dist,
+    n_iter=10,
+    cv=3,
+    scoring="accuracy",
+    random_state=42
+)
+
+random_search.fit(X_train, y_train)
+
+# Results
+print(
+    "Best Parameters:",
+    random_search.best_params_
+)
+
+print(
+    "Best CV Accuracy:",
+    random_search.best_score_
+)
+
+# Test prediction
+y_pred = random_search.predict(X_test)
+
+print(
+    "Test Accuracy:",
+    accuracy_score(y_test, y_pred)
+)
+
+
+EXPLANATION:
+
+RandomizedSearchCV tests a random selection of parameter combinations instead of testing every possible combination.
+
+C controls how strongly SVM penalizes classification errors.
+
+gamma controls how far the influence of each training point reaches when using the RBF kernel.
+
+Using n_iter=10 limits the search to 10 parameter combinations.
+
+
+TASK 3
+
+Apply SMOTE to an imbalanced fraud detection dataset and then perform hyperparameter tuning using GridSearchCV and RandomForestClassifier.
+
+INSTALLATION:
+
+If imbalanced-learn is not installed, run:
+
+!pip install imbalanced-learn
+
+
+CODE:
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+
+from imblearn.over_sampling import SMOTE
+
+# Load fraud dataset
+df = pd.read_csv("creditcard.csv")
+
+# Features and target
+X = df.drop("Class", axis=1)
+y = df["Class"]
+
+# Check original class distribution
+print("Original Class Distribution:")
+print(y.value_counts())
+
+# Split BEFORE applying SMOTE
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# Apply SMOTE only to training data
+smote = SMOTE(
+    random_state=42
+)
+
+X_train_smote, y_train_smote = smote.fit_resample(
+    X_train,
+    y_train
+)
+
+print("\nAfter SMOTE:")
+print(y_train_smote.value_counts())
+
+# Random Forest
+rf = RandomForestClassifier(
+    random_state=42
+)
+
+# Parameter grid
+param_grid = {
+    "n_estimators": [50, 100],
+    "max_depth": [5, 10, None]
+}
+
+# Grid Search
+grid = GridSearchCV(
+    rf,
+    param_grid,
+    cv=3,
+    scoring="f1",
+    n_jobs=-1
+)
+
+# Train on SMOTE data
+grid.fit(
+    X_train_smote,
+    y_train_smote
+)
+
+print(
+    "\nBest Parameters:",
+    grid.best_params_
+)
+
+# Predict untouched test set
+y_pred = grid.predict(X_test)
+
+print("\nClassification Report:")
+print(
+    classification_report(
+        y_test,
+        y_pred
+    )
+)
+
+
+EXPLANATION:
+
+SMOTE creates synthetic samples for the minority class so that the model receives more fraud examples during training.
+
+SMOTE is applied only to the training data. The test data is kept unchanged so that the final evaluation represents the original real-world class distribution.
+
+F1-score is used for tuning because accuracy alone can be misleading for highly imbalanced fraud datasets.
+
+
+TASK 4
+
+Compare model performance before and after using class_weight="balanced". Report accuracy and F1-score.
+
+CODE:
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score
+
+# Load dataset
+df = pd.read_csv("creditcard.csv")
+
+X = df.drop("Class", axis=1)
+y = df["Class"]
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+
+# ------------------------------------------
+# WITHOUT CLASS WEIGHTS
+# ------------------------------------------
+
+normal_model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+normal_model.fit(
+    X_train,
+    y_train
+)
+
+normal_pred = normal_model.predict(
+    X_test
+)
+
+normal_accuracy = accuracy_score(
+    y_test,
+    normal_pred
+)
+
+normal_f1 = f1_score(
+    y_test,
+    normal_pred
+)
+
+
+# ------------------------------------------
+# WITH BALANCED CLASS WEIGHTS
+# ------------------------------------------
+
+balanced_model = RandomForestClassifier(
+    n_estimators=100,
+    class_weight="balanced",
+    random_state=42
+)
+
+balanced_model.fit(
+    X_train,
+    y_train
+)
+
+balanced_pred = balanced_model.predict(
+    X_test
+)
+
+balanced_accuracy = accuracy_score(
+    y_test,
+    balanced_pred
+)
+
+balanced_f1 = f1_score(
+    y_test,
+    balanced_pred
+)
+
+
+# ------------------------------------------
+# COMPARE RESULTS
+# ------------------------------------------
+
+print("WITHOUT CLASS WEIGHTS")
+
+print(
+    "Accuracy:",
+    normal_accuracy
+)
+
+print(
+    "F1 Score:",
+    normal_f1
+)
+
+
+print("\nWITH CLASS WEIGHT = BALANCED")
+
+print(
+    "Accuracy:",
+    balanced_accuracy
+)
+
+print(
+    "F1 Score:",
+    balanced_f1
+)
+
+
+EXPLANATION:
+
+class_weight="balanced" automatically gives more importance to the minority class during training.
+
+Accuracy may remain similar or even decrease slightly, while the F1-score for the minority class may improve because the model pays more attention to rare fraud cases.
+
+For an imbalanced dataset, F1-score is usually more informative than accuracy when the minority class is important.
+
+
+TASK 5
+
+Use ChatGPT to generate a sample GridSearchCV parameter grid for a RandomForestClassifier and implement it.
+
+AI-GENERATED PARAMETER GRID:
+
+param_grid = {
+
+    "n_estimators": [
+        50,
+        100,
+        200
+    ],
+
+    "max_depth": [
+        None,
+        5,
+        10,
+        20
+    ],
+
+    "min_samples_split": [
+        2,
+        5,
+        10
+    ],
+
+    "min_samples_leaf": [
+        1,
+        2,
+        4
+    ]
+}
+
+
+IMPLEMENTATION:
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load dataset
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# Create model
+rf = RandomForestClassifier(
+    random_state=42
+)
+
+# AI-generated parameter grid
+param_grid = {
+
+    "n_estimators": [
+        50,
+        100,
+        200
+    ],
+
+    "max_depth": [
+        None,
+        5,
+        10,
+        20
+    ],
+
+    "min_samples_split": [
+        2,
+        5,
+        10
+    ],
+
+    "min_samples_leaf": [
+        1,
+        2,
+        4
+    ]
+}
+
+# Create GridSearchCV
+grid = GridSearchCV(
+    rf,
+    param_grid,
+    cv=5,
+    scoring="accuracy",
+    n_jobs=-1
+)
+
+# Train
+grid.fit(
+    X_train,
+    y_train
+)
+
+# Best parameters
+print(
+    "Best Parameters:",
+    grid.best_params_
+)
+
+print(
+    "Best Cross-Validation Accuracy:",
+    grid.best_score_
+)
+
+# Test prediction
+y_pred = grid.predict(
+    X_test
+)
+
+print(
+    "Test Accuracy:",
+    accuracy_score(
+        y_test,
+        y_pred
+    )
+)
+
+
+WHY THESE PARAMETERS WERE SELECTED:
+
+n_estimators:
+
+Controls the number of trees. Values such as 50, 100, and 200 allow us to test whether adding more trees improves prediction stability.
+
+max_depth:
+
+Controls how deep each tree can grow. Limiting the depth can reduce overfitting.
+
+min_samples_split:
+
+Controls the minimum number of samples required to split a node. Larger values can create simpler trees.
+
+min_samples_leaf:
+
+Controls the minimum number of samples required in a leaf node. Increasing this value can prevent the tree from learning very small or noisy patterns.
+
+
+WHAT I LEARNED FROM THE AI-GENERATED SOLUTION:
+
+ChatGPT helped me understand that hyperparameter tuning should not focus only on the number and depth of trees. Parameters such as min_samples_split and min_samples_leaf can also control model complexity and help reduce overfitting.
+
+
+FINAL CONCLUSION:
+
+GridSearchCV systematically tests all specified hyperparameter combinations, while RandomizedSearchCV tests a limited random selection and can therefore be faster.
+
+SMOTE can help models learn from imbalanced datasets by creating synthetic minority-class examples. Another approach is class_weight="balanced", which gives more importance to minority-class observations without generating new samples.
+
+For highly imbalanced classification problems, metrics such as F1-score, precision, and recall should be considered alongside accuracy because high accuracy does not necessarily mean that the minority class is being detected correctly.
