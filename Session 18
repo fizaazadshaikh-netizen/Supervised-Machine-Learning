@@ -1,0 +1,108 @@
+Cross‑Validation and Model Evaluation
+
+Task 1 – KNN with 5‑Fold Cross‑Validation (Iris Dataset)
+
+Code:
+from sklearn.datasets import load_iris
+from sklearn.model_selection import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+
+iris = load_iris()
+X, y = iris.data, iris.target
+
+model = KNeighborsClassifier(n_neighbors=5)
+
+scores = cross_val_score(model, X, y, cv=5, scoring="accuracy")
+
+print("Accuracy for each fold:", scores)
+print("Average Accuracy:", scores.mean())
+
+Explanation:
+The dataset is split into 5 folds. Each fold is used once as a test set while the remaining 4 folds are used for training. The average of the five accuracy scores gives the overall cross‑validation accuracy.
+
+
+Task 2 – Decision Tree with 10‑Fold Cross‑Validation (Iris Dataset)
+
+Code:
+from sklearn.tree import DecisionTreeClassifier
+
+model = DecisionTreeClassifier(random_state=42)
+
+scores = cross_val_score(model, X, y, cv=10, scoring="accuracy")
+
+print("Accuracy for each fold:")
+for i, score in enumerate(scores, start=1):
+    print("Fold", i, ":", score)
+
+print("\nAverage Accuracy:", scores.mean())
+
+
+Explanation:
+In 10‑fold cross‑validation, the dataset is divided into 10 parts. Each part is used once as the test set while the other 9 parts are used for training. This provides a more detailed evaluation of model performance.
+
+
+Task 3 – StratifiedKFold Class Distribution (Iris Dataset)
+
+Code:
+from sklearn.model_selection import StratifiedKFold
+import numpy as np
+
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+for fold, (train_index, test_index) in enumerate(skf.split(X, y), start=1):
+    y_test = y[test_index]
+    unique, counts = np.unique(y_test, return_counts=True)
+    print("Fold", fold)
+    for class_value, count in zip(unique, counts):
+        print("Class", class_value, ":", count)
+    print()
+
+
+Explanation:
+StratifiedKFold ensures that each fold maintains approximately the same proportion of each target class. Since the Iris dataset has three classes with equal samples, each fold contains a balanced distribution.
+
+Task 4 – Random Forest with Different cv Values (Wine Dataset)
+
+Code:
+from sklearn.datasets import load_wine
+from sklearn.ensemble import RandomForestClassifier
+
+wine = load_wine()
+X_wine, y_wine = wine.data, wine.target
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+
+for cv_value in [3, 5, 10]:
+    scores = cross_val_score(model, X_wine, y_wine, cv=cv_value, scoring="accuracy")
+    print("\nCV =", cv_value)
+    print("Scores:", scores)
+    print("Mean Accuracy:", scores.mean())
+    print("Standard Deviation:", scores.std())
+
+Explanation: 
+The standard deviation shows how much accuracy varies across folds. A lower standard deviation means the model’s performance is more stable. The cv value with the lowest standard deviation is considered the most stable.
+
+Task 5 – General Reusable Function
+
+Code:
+def evaluate_model(model, X, y, k=5):
+    scores = cross_val_score(model, X, y, cv=k, scoring="accuracy")
+    mean_score, std_score = scores.mean(), scores.std()
+    return mean_score, std_score
+model = KNeighborsClassifier(n_neighbors=5)
+mean, std = evaluate_model(model, X, y, k=5)
+
+print("Mean Accuracy:", mean)
+print("Standard Deviation:", std)
+
+
+Explanation:
+This reusable function accepts any classifier and dataset, performs k‑fold cross‑validation, and returns the mean and standard deviation of scores. It simplifies evaluation by making the process generalizable.
+
+Final Conclusion
+
+- Cross‑validation provides a reliable estimate of model performance by testing on multiple train‑test splits.  
+- K‑fold cross‑validation reduces bias compared to a single train‑test split.  
+- StratifiedKFold ensures balanced class proportions across folds, which is crucial for classification tasks.  
+- Standard deviation of scores indicates stability — lower values mean the model performs consistently across folds.  
+- A general evaluation function makes the process reusable for different models and datasets.  
