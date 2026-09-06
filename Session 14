@@ -1,0 +1,169 @@
+Support Vector Machine (SVM) Classification 
+
+Task 1 – Music Genre Classification (Pop vs Classical)
+
+Code:
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+
+X = np.array([
+    [120, 0.80],[125, 0.75],[130, 0.85],
+    [135, 0.78],[140, 0.82],[145, 0.88],
+    [70, 0.30],[75, 0.35],[80, 0.25],
+    [85, 0.40],[90, 0.32],[95, 0.38]
+])
+
+# Labels: 0 = Classical, 1 = Pop
+y = np.array([1,1,1,1,1,1, 0,0,0,0,0,0])
+model = SVC(kernel="linear")
+model.fit(X, y)
+
+# Grid for decision boundary
+x_min, x_max = X[:,0].min()-10, X[:,0].max()+10
+y_min, y_max = X[:,1].min()-0.1, X[:,1].max()+0.1
+xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300),
+                     np.linspace(y_min, y_max, 300))
+
+Z = model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+
+# Plot
+plt.contourf(xx, yy, Z, alpha=0.2)
+plt.scatter(X[:,0], X[:,1], c=y, edgecolors="black")
+plt.scatter(model.support_vectors_[:,0],
+            model.support_vectors_[:,1],
+            s=100, facecolors="none", edgecolors="black",
+            label="Support Vectors")
+plt.xlabel("Tempo")
+plt.ylabel("Danceability")
+plt.title("SVM Decision Boundary - Music Genres")
+plt.legend()
+plt.show()
+
+Explanation:
+The linear SVM separates Pop and Classical songs using tempo and danceability. The circled points are support vectors, which define the boundary’s position.
+
+Task 2 – Flipkart Review Sentiment Classification
+
+Code:
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+reviews = [
+    "Excellent product and very good quality",
+    "Amazing product I loved it",
+    "Very good and worth the money",
+    "Excellent quality and fast delivery",
+    "I am very happy with this product",
+    "Good product and nice quality",
+    "Very bad product",
+    "Worst product I have purchased",
+    "Poor quality and waste of money",
+    "Very disappointing product",
+    "Bad quality and terrible experience",
+    "I hate this product",
+    "Not worth the money",
+    "Completely useless product",
+    "Excellent purchase",
+    "Really good product"
+]
+labels = [
+    "positive","positive","positive","positive","positive","positive",
+    "negative","negative","negative","negative","negative","negative",
+    "negative","negative","positive","positive"
+]
+
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(reviews)
+y = labels
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42, stratify=y
+)
+model = SVC(kernel="linear")
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print("SVM Accuracy:", accuracy)
+
+Explanation:
+TF‑IDF converts reviews into numerical features. The linear SVM separates positive vs negative reviews, and the accuracy score shows the percentage of correct predictions.
+
+Task 3 – IPL Player Performance (Polynomial vs RBF Kernel)
+
+Code:
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+data = {
+    "runs":[250,300,350,400,450,500,550,600,650,700,
+            50,80,100,120,150,170,190,210,230,240],
+    "wickets":[2,3,4,5,6,7,8,9,10,11,
+               15,14,13,12,11,10,9,8,7,6],
+    "strike_rate":[120,125,130,135,140,145,150,155,160,165,
+                   80,85,90,95,100,105,110,115,118,119],
+    "performance":["Good"]*10 + ["Poor"]*10
+}
+df = pd.DataFrame(data)
+
+X = df[["runs","wickets","strike_rate"]]
+y = df["performance"]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y
+)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+poly_model = SVC(kernel="poly", degree=3)
+poly_model.fit(X_train, y_train)
+poly_pred = poly_model.predict(X_test)
+poly_accuracy = accuracy_score(y_test, poly_pred)
+rbf_model = SVC(kernel="rbf")
+rbf_model.fit(X_train, y_train)
+rbf_pred = rbf_model.predict(X_test)
+rbf_accuracy = accuracy_score(y_test, rbf_pred)
+print("Polynomial Kernel Accuracy:", poly_accuracy)
+print("RBF Kernel Accuracy:", rbf_accuracy)
+
+Explanation:
+- Polynomial kernel models curved relationships.  
+- RBF kernel captures complex non‑linear boundaries.  
+The kernel with higher accuracy is better suited for this dataset.
+
+Task 4 – Zomato Restaurant Rating Visualization
+
+Code:
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+X = np.array([
+    [50,2.5],[70,2.7],[90,2.8],[110,3.0],[130,3.1],[150,3.2],
+    [300,4.0],[350,4.1],[400,4.2],[450,4.3],[500,4.5],[550,4.6]
+])
+y = np.array([0,0,0,0,0,0, 1,1,1,1,1,1])  # 0=Bad, 1=Good
+model = SVC(kernel="linear", C=1)
+model.fit(X, y)
+x_min, x_max = X[:,0].min()-50, X[:,0].max()+50
+y_min, y_max = X[:,1].min()-0.5, X[:,1].max()+0.5
+xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300),
+                     np.linspace(y_min, y_max, 300))
+
+Z = model.decision_function(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+plt.contour(xx, yy, Z, levels=[-1,0,1], linestyles=["--","-","--"])
+plt.scatter(X[:,0], X[:,1], c=y, s=60, edgecolors="black")
+plt.scatter(model.support_vectors_[:,0],
+            model.support_vectors_[:,1],
+            s=150, facecolors="none", edgecolors="black",
+            linewidths=2, label="Support Vectors")
+plt.xlabel("Number of Reviews")
+plt.ylabel("Restaurant Rating")
+plt.title("SVM Margin and Support Vectors - Zomato")
+plt.legend()
+plt.show()
+
+Explanation:
+- Solid line = decision boundary.  
+- Dashed lines = margins.  
+- Circled points = support vectors, which define the boundary.  
