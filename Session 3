@@ -63,9 +63,3 @@ Example mapping:
 | Allrounder   | 0            |
 | Batsman      | 1            |
 | Bowler       | 2            |
-
-The encoding is alphabetical, so the numeric values depend on the dataset’s unique role names.
-
-
-✨ This version is **clean, professional, and visually structured** — ideal for your GitHub repository or academic submission.  
-Would you like me to **add a visual flow diagram** showing the five preprocessing steps (Missing Values → Imputation → Encoding → Model‑Ready Data)? It would make your assignment presentation‑ready.
